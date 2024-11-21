@@ -22,6 +22,7 @@
   - [ ] Nested recurrence sequences
   - [ ] Combined/transformed sequences
 - Loss Function
+  - [x] Cross-entropy
   - [ ] Distance-weighted cross-entropy
   - [ ] Implementation with α scaling factor
 - Loss Handling for Masked Positions

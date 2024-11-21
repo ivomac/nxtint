@@ -87,6 +87,10 @@
 
 - Optimizer:
   - [x] AdamW
+    - β1 = 0.9 (momentum)
+    - β2 = 0.999 (RMSprop factor)
+    - weight_decay = 0.01
+    - ε = 1e-8
   - [ ] Adam
   - [ ] SGD
   - Rationale: AdamW is standard for transformers, weight decay may help with generalization

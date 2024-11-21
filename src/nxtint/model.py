@@ -3,6 +3,10 @@
 import torch
 import torch.nn as nn
 
+from nxtint.utils.logging import DEBUG, log, setup_logger
+
+logger = setup_logger(__name__, level=DEBUG)
+
 
 class SequenceTransformer(nn.Module):
     """Transformer model for predicting the next integer in a sequence.
@@ -40,7 +44,10 @@ class SequenceTransformer(nn.Module):
         self.max_int = max_int
 
         # Create position indices tensor once
-        self.register_buffer("positions", torch.arange(seq_length).float() / (seq_length - 1))
+        self.register_buffer(
+            "positions",
+            torch.arange(seq_length).float() / (seq_length - 1),
+        )
 
         # Transformer layers
         encoder_layer = nn.TransformerEncoderLayer(
@@ -52,11 +59,16 @@ class SequenceTransformer(nn.Module):
             batch_first=True,
             norm_first=False,
         )
-        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=n_layers)
+        self.transformer = nn.TransformerEncoder(
+            encoder_layer,
+            num_layers=n_layers,
+        )
 
         # Output projection
         self.output = nn.Linear(d_model, max_int + 1)
+        return
 
+    @log(logger, level=DEBUG)
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """Forward pass of the model.
 

@@ -1,0 +1,21 @@
+[project]
+authors = [
+    { name = "Ivo Maceira", email = "ivomaceira@gmail.com" }
+]
+readme = "README.md"
+license = { text = "MIT" }
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+indent-width = 4
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "D", "I", "N", "S", "T", "UP", "B", "SIM", "R"]
+ignore = ["B019", "D413", "S603", "S607", "T201"]
+
+

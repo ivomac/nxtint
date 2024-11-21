@@ -241,8 +241,20 @@ Validation process:
 - Compare all metrics against random predictor baselines
 - Log metrics and baseline comparisons to tensorboard
 
+## Early Stopping Criteria
+- Options:
+  - [x] Validation loss plateau
+  - [ ] Validation accuracy plateau
+  - [ ] Combined criteria (loss and accuracy)
+  - Rationale: Monitoring validation loss is standard and directly relates to model's generalization
+
+Implementation details:
+- Patience: 10 epochs
+- Minimum delta: 0.001 (minimum change to qualify as an improvement)
+- Save best weights (lowest validation loss) during training
+- Restore best weights after stopping
+
 ## TBD
-- Early stopping criteria
 - Training phases: strict jump, overlapping/gradual transitions
 - α scaling factor value/range
 - Normalize the distance penalty by sequence length?

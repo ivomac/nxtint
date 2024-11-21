@@ -102,3 +102,23 @@
   - Rationale: Since patterns are exact, model should converge relatively quickly
 
 - Curriculum learning strategy (TBD)
+
+## Loss Function
+- Options:
+  - [ ] Standard cross-entropy
+  - [x] Distance-weighted cross-entropy
+  - [ ] Pure distance-based loss
+  - Rationale: Combine classification confidence with numerical distance penalty
+
+Distance weighting options:
+  - [x] Linear: weight = |predicted - true|
+  - [ ] Quadratic: weight = (predicted - true)²
+  - [ ] Square root: weight = sqrt(|predicted - true|)
+  - Rationale: Linear scaling provides intuitive penalty without over-emphasizing large errors
+
+Implementation approach:
+- Start with standard cross-entropy loss
+- Multiply by (1 + α * distance_weight) where α is a scaling factor
+- Example: if true=10, prediction distribution peaks at 100:
+  - Basic cross-entropy would only care about wrong classification
+  - Distance weight adds 90× more penalty compared to peaking at 11

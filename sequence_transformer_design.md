@@ -101,7 +101,49 @@
   - [ ] 500+
   - Rationale: Since patterns are exact, model should converge relatively quickly
 
-- Curriculum learning strategy (TBD)
+- Curriculum learning strategy:
+  - Phase 1: Simple recurrence relations
+    - Simple recurrence relations on the past elements
+
+    - Order 0 (e.g., [1,1,1,...])
+    - Order 1 (e.g., [2,4,6,...])
+    - Order 2 (e.g., [1,0,1,0,...])
+
+  - Phase 2: Nested recurrence relations
+    - Recurrence relations where the constants themselves follow a recurrence relation
+
+    - Arithmetic sequences with varying steps
+      - Alternating steps [1,3,4,6,7,9,...] (steps: +2,+1)
+      - Growing steps [1,2,4,7,11,...] (steps: +1,+2,+3,...)
+      - Shrinking steps [1,5,8,10,11,...] (steps: +4,+3,+2,+1)
+
+    - Geometric sequences
+      - Simple multiplication [2,4,8,16,...]
+      - Alternating factors [1,2,6,12,36,...] (factors: ×2,×3)
+      - Rational factors [8,4,6,3,...] (×1/2,×3/2)
+
+    - Multi-period patterns
+      - Two-step patterns [1,1,2,2,3,3,...]
+      - Three-step patterns [1,1,1,2,2,2,...]
+      - Mixed periods [1,2,2,3,4,4,5,6,6,...]
+
+  - Phase 3: Combined and transformed recurrence relations
+    - Compositions
+      - Apply one recurrence relation to the output of another
+      - Example: fibonacci numbers mod 3
+      - Example: double every third number in an arithmetic sequence
+
+    - Transformations
+      - Apply functions to terms of a recurrence relation
+      - Example: floor/ceiling of geometric sequences
+      - Example: alternating signs of arithmetic sequence
+
+    - Conditional relations
+      - Different rules based on previous terms
+      - Example: increment if previous is even, double if odd
+      - Example: switch between two different rules based on local pattern
+
+  Rationale: Build up from simple to complex patterns helps establish basic numerical relationships first
 
 ## Loss Function
 - Options:

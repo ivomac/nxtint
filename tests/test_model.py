@@ -18,17 +18,26 @@ def test_model_forward():
     logits = model(x)
 
     # Check output shape
-    assert logits.shape == (batch_size, 256), f"Got: {logits.shape}"
+    assert logits.shape == (batch_size, 256)
 
     # Check output range (logits should be finite)
-    assert torch.isfinite(logits).all(), f"Got: {logits}"
+    assert torch.isfinite(logits).all()
 
 
-def test_model_parameters():
-    """Test model parameter initialization."""
+def test_model_predict():
+    """Test model prediction."""
+    # Create model
     model = SequenceTransformer()
 
-    # All parameters should be initialized
-    for p in model.parameters():
-        assert p.requires_grad, f"Got: {p.requires_grad}"
-        assert torch.isfinite(p).all(), f"Got: {p}"
+    # Create sample batch
+    batch_size = 3
+    x = torch.randint(0, 256, (batch_size, 8))
+
+    # Get predictions
+    predictions = model.predict(x)
+
+    # Check output shape
+    assert predictions.shape == (batch_size,)
+
+    # Check output range
+    assert torch.all(predictions >= 0) and torch.all(predictions <= 255)

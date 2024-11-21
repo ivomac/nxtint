@@ -39,6 +39,7 @@ class SequenceTransformer(nn.Module):
             d_ff: Feed-forward network dimension
             max_int: Maximum integer value
         """
+        # Initialize parent class first
         super().__init__()
         self.seq_length = seq_length
         self.max_int = max_int
@@ -94,3 +95,17 @@ class SequenceTransformer(nn.Module):
 
         # Project to output logits
         return self.output(final)
+
+    @log(logger, level=DEBUG)
+    def predict(self, x: torch.Tensor) -> torch.Tensor:
+        """Get the most likely next number prediction.
+
+        Args:
+            x: Input tensor of shape (batch_size, seq_length) containing integers
+                in range [0, max_int]
+
+        Returns:
+            torch.Tensor: Predicted next integers of shape (batch_size,)
+        """
+        # Get logits and return argmax
+        return torch.argmax(self(x), dim=-1)

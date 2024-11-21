@@ -29,16 +29,31 @@
   - Rationale: Using minimal 8-bit binary encoding as starting point
 
 ## Training Approach
-- TBD:
+- Options:
+  - [x] Train on all prefixes (causal modeling)
+  - [ ] Train only on full-length sequences
+  - Rationale: Maximizes use of training data, helps model learn patterns of varying lengths
+
+## Sequence Masking
+- Options:
+  - [ ] Padding with mask tokens
+  - [x] Causal masking
+  - Rationale: Causal masking naturally handles variable length inputs and matches the autoregressive nature of sequence prediction
+
+## Generation Strategy
+- Options:
+  - [x] Cached/Incremental decoding
+  - [ ] Naive sequential generation
+  - [ ] Parallel generation
+  - Rationale: Caching previous key/value states avoids redundant computation
+
+## TBD
+  - Number of transformer layers
+  - Number of attention heads
+  - Feed-forward dimension
+  - Dropout rates
   - Batch size
   - Learning rate
   - Optimizer
   - Number of epochs
   - Curriculum learning strategy
-
-## Model Architecture
-- TBD:
-  - Number of transformer layers
-  - Number of attention heads
-  - Feed-forward dimension
-  - Dropout rates

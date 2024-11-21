@@ -18,15 +18,17 @@
   - [ ] Random initialized learnable embeddings
   - [ ] Positional/frequency-based initialization
   - [ ] Number-theoretic initialization (modulo, factors, etc)
-  - [x] Fixed binary encoding (8 bits)
-  - Rationale: Direct binary representation matches the natural structure of numbers
+  - [ ] Fixed binary encoding (8 bits)
+  - [x] (integer/max_integer, position/max_position) tuple
+  - Rationale: Directly encode number and position information
 
 ## Embedding Dimension
 - Options:
-  - [x] 8 (binary encoding)
+  - [x] 2 (number + position)
+  - [ ] 8 (binary encoding)
   - [ ] 128-256 (typical transformer)
   - [ ] 32-64 (compromise)
-  - Rationale: Using minimal 8-bit binary encoding as starting point
+  - Rationale: Small dimension sufficient may be sufficient for simple patterns
 
 ## Training Approach
 - Options:
@@ -55,16 +57,17 @@
   - Rationale: Small number of layers sufficient for simple patterns
 
 - Number of attention heads:
+  - [ ] 1 head
   - [x] 2 heads
   - [ ] 4 heads
   - [ ] 8+ heads
-  - Rationale: Few heads needed due to small embedding dimension (8)
+  - Rationale: Few heads needed due to small embedding dimension (2)
 
 - Feed-forward dimension:
   - [x] 32
   - [ ] 64
   - [ ] 128+
-  - Rationale: Small FFN suitable for 8-dim embeddings
+  - Rationale: Small FFN suitable for 2-dim embeddings
 
 - Dropout rates:
   - [x] 0.0 (no dropout)
@@ -164,3 +167,26 @@ Implementation approach:
 - Example: if true=10, prediction distribution peaks at 100:
   - Basic cross-entropy would only care about wrong classification
   - Distance weight adds 90× more penalty compared to peaking at 11
+
+## TBD
+- Loss of masked positions
+- Validation and test sets
+- Beam search vs greedy decoding
+- Temperature
+- Activation functions
+- Layer normalization
+- Gradient clipping
+- Learning rate scheduling
+- Validation frequency
+- Early stopping criteria
+- Training phases: strict jump, overlapping/gradual transitions
+- α scaling factor value/range
+- Normalize the distance penalty by sequence length?
+- Should distance weighting change during training phases?
+- Evaluation metrics
+- Model selection criteria
+- Error analysis techniques
+- Deployment considerations
+- Hardware/software requirements
+- Scalability and performance considerations
+

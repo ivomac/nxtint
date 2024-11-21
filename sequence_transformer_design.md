@@ -223,8 +223,25 @@ Implementation approach:
   - [ ] Exponential decay
   - Rationale: Warmup helps with initial training stability, cosine decay provides smooth learning rate reduction
 
+## Validation Frequency
+- Options:
+  - [ ] Every epoch
+  - [x] Every 1000 training steps
+  - [ ] Every N minutes
+  - [ ] Dynamic/adaptive frequency
+  - Rationale: Fixed step interval provides consistent monitoring without too much overhead
+
+Validation process:
+- Generate 100 fresh sequences
+- Evaluate full sequence prediction accuracy
+- Track metrics:
+  - Classification accuracy (vs random baseline: 1/256 ≈ 0.39%)
+  - Mean numerical distance error (vs random baseline: 85.33 for uniform distribution over [0,255])
+  - Loss value (vs random baseline: -ln(1/256) ≈ 5.55 for uniform distribution)
+- Compare all metrics against random predictor baselines
+- Log metrics and baseline comparisons to tensorboard
+
 ## TBD
-- Validation frequency
 - Early stopping criteria
 - Training phases: strict jump, overlapping/gradual transitions
 - α scaling factor value/range

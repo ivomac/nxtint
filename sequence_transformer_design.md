@@ -168,8 +168,14 @@ Implementation approach:
   - Basic cross-entropy would only care about wrong classification
   - Distance weight adds 90× more penalty compared to peaking at 11
 
+## Loss Handling for Masked Positions
+- Options:
+  - [ ] Ignore masked positions in loss calculation
+  - [x] Include all positions in loss calculation
+  - [ ] Weighted combination based on position
+  - Rationale: Including all positions helps model learn from partial sequences
+
 ## TBD
-- Loss of masked positions
 - Validation and test sets
 - Beam search vs greedy decoding
 - Temperature

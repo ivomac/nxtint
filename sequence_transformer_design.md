@@ -72,9 +72,29 @@
   - [ ] 0.2+
   - Rationale: No dropout needed since we're modeling exact mathematical patterns without noise
 
-## Training Parameters (TBD)
-  - Batch size
-  - Learning rate
-  - Optimizer
-  - Number of epochs
-  - Curriculum learning strategy
+## Training Parameters
+- Batch size:
+  - [x] 32
+  - [ ] 64
+  - [ ] 128+
+  - Rationale: Small batch size sufficient for exact patterns
+
+- Learning rate:
+  - [x] 1e-4
+  - [ ] 1e-3
+  - [ ] 5e-4
+  - Rationale: Conservative learning rate for stable training
+
+- Optimizer:
+  - [x] AdamW
+  - [ ] Adam
+  - [ ] SGD
+  - Rationale: AdamW is standard for transformers, weight decay may help with generalization
+
+- Number of epochs:
+  - [x] 50-100
+  - [ ] 100-500
+  - [ ] 500+
+  - Rationale: Since patterns are exact, model should converge relatively quickly
+
+- Curriculum learning strategy (TBD)

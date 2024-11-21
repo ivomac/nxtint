@@ -213,8 +213,17 @@ Implementation approach:
   - [ ] Value clipping (clip_value=±1.0)
   - Rationale: Global norm clipping is standard practice for transformers, helps prevent exploding gradients
 
+## Learning Rate Scheduling
+- Options:
+  - [ ] Constant learning rate
+  - [x] Linear warmup + cosine decay
+    - Warmup steps: 5000
+    - Min learning rate: 1e-6
+  - [ ] Step decay
+  - [ ] Exponential decay
+  - Rationale: Warmup helps with initial training stability, cosine decay provides smooth learning rate reduction
+
 ## TBD
-- Learning rate scheduling
 - Validation frequency
 - Early stopping criteria
 - Training phases: strict jump, overlapping/gradual transitions

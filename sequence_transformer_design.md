@@ -175,8 +175,15 @@ Implementation approach:
   - [ ] Weighted combination based on position
   - Rationale: Including all positions helps model learn from partial sequences
 
+## Validation and Testing Approach
+- No explicit train/validation/test split needed
+- Rationale: Training data is generated on-the-fly with parameters from fixed distributions
+- For validation/testing:
+  - Generate new sequences using same parameter distributions
+  - Evaluate model on these fresh sequences
+  - No risk of data leakage since generation is deterministic given parameters
+
 ## TBD
-- Validation and test sets
 - Beam search vs greedy decoding
 - Temperature
 - Activation functions

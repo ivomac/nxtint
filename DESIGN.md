@@ -49,6 +49,51 @@ Options:
   - [x] Classification with 256 classes
   - Rationale: More natural for transformers, clear probability distribution over possible next values
 
+## Loss Function
+Options:
+  - [ ] Standard cross-entropy
+  - [x] Distance-weighted cross-entropy
+  - [ ] Pure distance-based loss
+  - Rationale: Combine classification confidence with numerical distance penalty
+
+Distance weighting options:
+  - [x] Linear: weight = |predicted - true|
+  - [ ] Quadratic: weight = (predicted - true)²
+  - [ ] Square root: weight = sqrt(|predicted - true|)
+  - Rationale: Linear scaling provides intuitive penalty without over-emphasizing large errors
+
+Implementation approach:
+  - Start with standard cross-entropy loss
+  - Multiply by (1 + α * distance_weight) where α is a scaling factor
+  - Suggested value: α = 0.1
+  - Example: if true=10, prediction distribution peaks at 100:
+    - Basic cross-entropy would only care about wrong classification
+    - Distance weight adds 90× more penalty compared to peaking at 11
+
+## Loss Handling for Masked Positions
+Options:
+  - [ ] Ignore masked positions in loss calculation
+  - [x] Include all positions in loss calculation
+    - Normalize by sequence length
+  - [ ] Weighted combination based on position
+  - Rationale: Including all positions helps model learn from partial sequences
+
+## Activation Functions
+Options:
+  - [ ] ReLU
+  - [x] GELU
+  - [ ] Swish
+  - Rationale: GELU is standard in modern transformers, provides smoother gradients
+
+## Layer Normalization
+Options:
+  - [ ] No layer normalization
+  - [ ] Pre-norm (normalize before attention/FFN)
+  - [x] Post-norm (normalize after attention/FFN)
+    - epsilon = 1e-5
+    - Learn scale and bias parameters
+  - Rationale: Post-norm is the original transformer design, works well for smaller models
+
 ## Training Approach
 Options:
   - [x] Train on all prefixes (causal modeling/masking)
@@ -161,57 +206,12 @@ Options:
   - [ ] Parallel generation
   - Rationale: Caching previous key/value states avoids redundant computation
 
-## Loss Function
-Options:
-  - [ ] Standard cross-entropy
-  - [x] Distance-weighted cross-entropy
-  - [ ] Pure distance-based loss
-  - Rationale: Combine classification confidence with numerical distance penalty
-
-Distance weighting options:
-  - [x] Linear: weight = |predicted - true|
-  - [ ] Quadratic: weight = (predicted - true)²
-  - [ ] Square root: weight = sqrt(|predicted - true|)
-  - Rationale: Linear scaling provides intuitive penalty without over-emphasizing large errors
-
-Implementation approach:
-  - Start with standard cross-entropy loss
-  - Multiply by (1 + α * distance_weight) where α is a scaling factor
-  - Suggested value: α = 0.1
-  - Example: if true=10, prediction distribution peaks at 100:
-    - Basic cross-entropy would only care about wrong classification
-    - Distance weight adds 90× more penalty compared to peaking at 11
-
-## Loss Handling for Masked Positions
-Options:
-  - [ ] Ignore masked positions in loss calculation
-  - [x] Include all positions in loss calculation
-    - Normalize by sequence length
-  - [ ] Weighted combination based on position
-  - Rationale: Including all positions helps model learn from partial sequences
-
 ## Generation Decoding Strategy
 Options:
   - [x] Greedy decoding
   - [ ] Beam search (width=2,3,...)
   - [ ] Temperature sampling
   - Rationale: For deterministic sequences, greedy decoding should suffice since there should be one clear "right" answer
-
-## Activation Functions
-Options:
-  - [ ] ReLU
-  - [x] GELU
-  - [ ] Swish
-  - Rationale: GELU is standard in modern transformers, provides smoother gradients
-
-## Layer Normalization
-Options:
-  - [ ] No layer normalization
-  - [ ] Pre-norm (normalize before attention/FFN)
-  - [x] Post-norm (normalize after attention/FFN)
-    - epsilon = 1e-5
-    - Learn scale and bias parameters
-  - Rationale: Post-norm is the original transformer design, works well for smaller models
 
 ## Gradient Clipping
 Options:

@@ -1,0 +1,53 @@
+# Implementation Status from DESIGN.md
+
+## Implemented ✓
+- Sequence Length
+  - [x] 8 previous numbers chosen
+- Embedding Approach
+  - [x] Fixed (integer/max_integer, position/max_position) tuple
+- Model Architecture (Partial)
+  - [x] 2 transformer layers
+  - [x] 2 attention heads
+  - [x] 32 feed-forward dimension
+  - [x] No dropout (0.0)
+- Activation Functions
+  - [x] GELU chosen
+- Output Format
+  - [x] Classification with 256 classes
+
+## TODO ⏳
+- Data Generation
+  - [ ] Data generation module
+  - [ ] First-order recurrence sequences
+  - [ ] Nested recurrence sequences
+  - [ ] Combined/transformed sequences
+- Loss Function
+  - [ ] Distance-weighted cross-entropy
+  - [ ] Implementation with α scaling factor
+- Loss Handling for Masked Positions
+  - [ ] Include all positions with normalization
+- Layer Normalization
+  - [ ] Post-norm implementation
+- Training Approach
+  - [ ] Train on all prefixes
+- Training Parameters
+  - [ ] Batch size 32
+  - [ ] Linear warmup + cosine decay
+  - [ ] AdamW configuration
+  - [ ] 50-100 epochs
+- Early Stopping Criteria
+  - [ ] Validation loss plateau monitoring
+- Curriculum Learning Strategy
+  - [ ] Phase 1: Simple recurrence
+  - [ ] Phase 2: Nested recurrence
+  - [ ] Phase 3: Combined/transformed
+- Generation Strategy
+  - [ ] Cached/Incremental decoding
+- Generation Decoding Strategy
+  - [ ] Greedy decoding
+- Gradient Clipping
+  - [ ] Global norm clipping
+- Validation
+  - [ ] On-the-fly sequence generation
+- Validation Frequency
+  - [ ] Every 1000 training steps

@@ -255,7 +255,17 @@ Implementation details:
 - Restore best weights after stopping
 
 ## TBD
-- Training phases: strict jump, overlapping/gradual transitions
+## Training Phase Transitions
+- Options:
+  - [ ] Strict jump between phases
+  - [x] Overlapping/gradual transitions
+  - Rationale: Gradual transitions help the model adapt to complexity without losing learned patterns
+
+Implementation details:
+- Gradually increase the proportion of complex patterns in the training data
+- Use a linear schedule over a fixed number of epochs to transition between phases
+
+## TBD
 - α scaling factor value/range
 - Normalize the distance penalty by sequence length?
 - Should distance weighting change during training phases?

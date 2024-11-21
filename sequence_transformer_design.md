@@ -177,6 +177,7 @@ Implementation approach:
 - Options:
   - [ ] Ignore masked positions in loss calculation
   - [x] Include all positions in loss calculation
+    - Normalize by sequence length
   - [ ] Weighted combination based on position
   - Rationale: Including all positions helps model learn from partial sequences
 
@@ -259,7 +260,6 @@ Implementation details:
 - Save best weights (lowest validation loss) during training
 - Restore best weights after stopping
 
-## TBD
 ## Training Phase Transitions
 - Options:
   - [ ] Strict jump between phases
@@ -270,13 +270,24 @@ Implementation details:
 - Gradually increase the proportion of complex patterns in the training data
 - Use a linear schedule over a fixed number of epochs to transition between phases
 
-## TBD
-- Normalize the distance penalty by sequence length?
-- Should distance weighting change during training phases?
-- Evaluation metrics
-- Model selection criteria
-- Error analysis techniques
-- Deployment considerations
-- Hardware/software requirements
-- Scalability and performance considerations
+## Memory Estimation
+- Embedding Layer: 
+  - Memory = num_embeddings * embedding_dim * 4 bytes (for float32)
+- Transformer Layers:
+  - Memory per layer = 2 * (embedding_dim * num_heads * seq_length * 4 bytes) + (feed_forward_dim * seq_length * 4 bytes)
+  - Total memory = num_layers * memory per layer
+- Batch Size:
+  - Memory = batch_size * seq_length * embedding_dim * 4 bytes
+- Intermediate Activations:
+  - Additional memory required for backpropagation, typically 2-3x forward pass memory
+
+## GPU Specifications
+- AMD Radeon RX 6600
+  - Infinity Cache: 32 MB
+  - Max Memory Size: 8 GB GDDR6
+  - Memory Bandwidth: Up to 224 GB/s
+
+## Recommendations
+- Ensure model fits within 8 GB memory limit
+- Consider reducing batch size or model dimensions if memory issues arise
 

@@ -197,9 +197,23 @@ Implementation approach:
   - [ ] Swish
   - Rationale: GELU is standard in modern transformers, provides smoother gradients
 
+## Layer Normalization
+- Options:
+  - [ ] No layer normalization
+  - [ ] Pre-norm (normalize before attention/FFN)
+  - [x] Post-norm (normalize after attention/FFN)
+    - epsilon = 1e-5
+    - Learn scale and bias parameters
+  - Rationale: Post-norm is the original transformer design, works well for smaller models
+
+## Gradient Clipping
+- Options:
+  - [ ] No gradient clipping
+  - [x] Global norm clipping (max_norm=1.0)
+  - [ ] Value clipping (clip_value=±1.0)
+  - Rationale: Global norm clipping is standard practice for transformers, helps prevent exploding gradients
+
 ## TBD
-- Layer normalization
-- Gradient clipping
 - Learning rate scheduling
 - Validation frequency
 - Early stopping criteria

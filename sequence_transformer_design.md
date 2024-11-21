@@ -164,9 +164,14 @@ Distance weighting options:
 Implementation approach:
 - Start with standard cross-entropy loss
 - Multiply by (1 + α * distance_weight) where α is a scaling factor
+- Suggested value: α = 0.1
 - Example: if true=10, prediction distribution peaks at 100:
   - Basic cross-entropy would only care about wrong classification
   - Distance weight adds 90× more penalty compared to peaking at 11
+- Options:
+  - [x] Fixed value
+  - [ ] Dynamic scaling
+  - Rationale: A fixed value simplifies implementation and tuning
 
 ## Loss Handling for Masked Positions
 - Options:
@@ -266,7 +271,6 @@ Implementation details:
 - Use a linear schedule over a fixed number of epochs to transition between phases
 
 ## TBD
-- α scaling factor value/range
 - Normalize the distance penalty by sequence length?
 - Should distance weighting change during training phases?
 - Evaluation metrics

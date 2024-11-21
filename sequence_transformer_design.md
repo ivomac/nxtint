@@ -183,10 +183,21 @@ Implementation approach:
   - Evaluate model on these fresh sequences
   - No risk of data leakage since generation is deterministic given parameters
 
+## Generation Decoding Strategy
+- Options:
+  - [x] Greedy decoding
+  - [ ] Beam search (width=2,3,...)
+  - [ ] Temperature sampling
+  - Rationale: For deterministic sequences, greedy decoding should suffice since there should be one clear "right" answer
+
+## Activation Functions
+- Options:
+  - [ ] ReLU
+  - [x] GELU
+  - [ ] Swish
+  - Rationale: GELU is standard in modern transformers, provides smoother gradients
+
 ## TBD
-- Beam search vs greedy decoding
-- Temperature
-- Activation functions
 - Layer normalization
 - Gradient clipping
 - Learning rate scheduling

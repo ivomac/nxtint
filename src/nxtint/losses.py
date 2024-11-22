@@ -10,16 +10,22 @@ logger = setup_logger(__name__, level=DEBUG)
 
 
 @log(logger, level=DEBUG)
-def sequence_loss(logits: torch.Tensor, targets: torch.Tensor, alpha: float = 0.1) -> torch.Tensor:
+def sequence_loss(
+    logits: torch.Tensor,
+    targets: torch.Tensor,
+    alpha: float = 0.1,
+    reduce: bool = True,
+) -> torch.Tensor:
     """Calculate distance-weighted cross entropy loss.
 
     Args:
         logits: Raw model outputs of shape (batch_size, INT_N)
         targets: Target integers of shape (batch_size,)
         alpha: Weight factor for distance penalty (default: 0.1)
+        reduce: Whether to return mean loss (default: True)
 
     Returns:
-        torch.Tensor: Scalar loss value
+        torch.Tensor: loss values OR mean loss value
     """
     # Convert targets to class indices (shift from [-MAX_INT, MAX_INT] to [0, INT_N])
     target_classes = targets + MAX_INT
@@ -36,5 +42,7 @@ def sequence_loss(logits: torch.Tensor, targets: torch.Tensor, alpha: float = 0.
     # Apply distance weighting
     weighted_loss = base_loss * (1 + alpha * distance)
 
-    # Return mean loss
-    return weighted_loss.mean()
+    if reduce:
+        # Return mean loss
+        return weighted_loss.mean()
+    return weighted_loss

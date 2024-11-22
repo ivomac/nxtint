@@ -23,8 +23,8 @@
   - [ ] Combined/transformed sequences
 - Loss Function
   - [x] Cross-entropy
-  - [ ] Distance-weighted cross-entropy
-  - [ ] Implementation with α scaling factor
+  - [x] Distance-weighted cross-entropy
+  - [x] Implementation with α scaling factor
 - Loss Handling for Masked Positions
   - [ ] Include all positions with normalization
 - Layer Normalization

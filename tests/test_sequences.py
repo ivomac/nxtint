@@ -14,6 +14,8 @@ def test_sequence_validity():
     assert batch.shape == (10, 8)
     assert (batch >= -MAX_INT).all() and (batch < MAX_INT).all()
 
+    return
+
 
 def test_batch_generation():
     """Test that batch generation works correctly."""
@@ -28,3 +30,5 @@ def test_batch_generation():
 
     # Check that sequences are different between batches
     assert not torch.allclose(batch1, batch2)
+
+    return

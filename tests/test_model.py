@@ -25,6 +25,8 @@ def test_model_forward():
     # Check output range (logits should be finite)
     assert torch.isfinite(logits).all()
 
+    return
+
 
 def test_model_predict():
     """Test model prediction."""
@@ -44,10 +46,12 @@ def test_model_predict():
     # Check output range
     assert (predictions >= -MAX_INT).all() and (predictions < MAX_INT).all()
 
+    return
+
 
 @pytest.mark.skipif(
     not (torch.cuda.is_available() or hasattr(torch.backends, "mps")),
-    reason="No GPU (CUDA or ROCm) available"
+    reason="No GPU (CUDA or ROCm) available",
 )
 def test_model_gpu():
     """Test model on GPU if available."""
@@ -73,3 +77,5 @@ def test_model_gpu():
     # Move to CPU for assertions
     predictions = predictions.cpu()
     assert (predictions >= -MAX_INT).all() and (predictions < MAX_INT).all()
+
+    return

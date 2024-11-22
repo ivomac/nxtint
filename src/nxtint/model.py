@@ -3,6 +3,7 @@
 import torch
 import torch.nn as nn
 
+from nxtint.utils.constants import INT_N, MAX_INT
 from nxtint.utils.logging import DEBUG, log, setup_logger
 
 logger = setup_logger(__name__, level=DEBUG)
@@ -17,7 +18,6 @@ class SequenceTransformer(nn.Module):
         n_heads: Number of attention heads
         d_model: Model dimension (2 for number+position encoding)
         d_ff: Feed-forward network dimension
-        max_int: Maximum integer value (255 for byte sequences)
     """
 
     def __init__(
@@ -27,7 +27,6 @@ class SequenceTransformer(nn.Module):
         n_heads: int = 2,
         d_model: int = 2,
         d_ff: int = 32,
-        max_int: int = 255,
     ) -> None:
         """Initialize the model.
 
@@ -37,12 +36,10 @@ class SequenceTransformer(nn.Module):
             n_heads: Number of attention heads
             d_model: Model dimension
             d_ff: Feed-forward network dimension
-            max_int: Maximum integer value
         """
         # Initialize parent class first
         super().__init__()
         self.seq_length = seq_length
-        self.max_int = max_int
 
         # Create position indices tensor once
         self.register_buffer(
@@ -66,7 +63,7 @@ class SequenceTransformer(nn.Module):
         )
 
         # Output projection
-        self.output = nn.Linear(d_model, max_int + 1)
+        self.output = nn.Linear(d_model, INT_N)
         return
 
     @log(logger, level=DEBUG)
@@ -75,13 +72,12 @@ class SequenceTransformer(nn.Module):
 
         Args:
             x: Input tensor of shape (batch_size, seq_length) containing integers
-                in range [0, max_int]
 
         Returns:
-            torch.Tensor: Logits for next integer prediction (batch_size, max_int + 1)
+            torch.Tensor: Logits for next integer prediction (batch_size, INT_N)
         """
         # Create embeddings (batch_size, seq_length, 2)
-        numbers = x.float() / self.max_int
+        numbers = x.float() / MAX_INT
         positions = self.positions.expand(x.size(0), -1)
 
         # Combine into embedding
@@ -102,10 +98,9 @@ class SequenceTransformer(nn.Module):
 
         Args:
             x: Input tensor of shape (batch_size, seq_length) containing integers
-                in range [0, max_int]
 
         Returns:
             torch.Tensor: Predicted next integers of shape (batch_size,)
         """
         # Get logits and return argmax
-        return torch.argmax(self(x), dim=-1)
+        return torch.argmax(self(x), dim=-1) - MAX_INT

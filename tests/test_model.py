@@ -3,6 +3,7 @@
 import torch
 
 from nxtint.model import SequenceTransformer
+from nxtint.utils.constants import MAX_INT
 
 
 def test_model_forward():
@@ -12,7 +13,7 @@ def test_model_forward():
 
     # Create sample batch
     batch_size = 3
-    x = torch.randint(0, 256, (batch_size, 8))
+    x = torch.randint(-MAX_INT, MAX_INT, (batch_size, 8))
 
     # Forward pass
     logits = model(x)
@@ -40,4 +41,4 @@ def test_model_predict():
     assert predictions.shape == (batch_size,)
 
     # Check output range
-    assert torch.all(predictions >= 0) and torch.all(predictions <= 255)
+    assert torch.all(predictions >= -MAX_INT) and torch.all(predictions < MAX_INT)

@@ -2,6 +2,7 @@
 
 import torch
 
+from nxtint.utils.constants import INT_TYPE, MAX_INT
 from nxtint.utils.logging import DEBUG, log, setup_logger
 
 logger = setup_logger(__name__, level=DEBUG)
@@ -12,7 +13,6 @@ class SequenceGenerator:
 
     Attributes:
         seq_length: Length of sequences to generate
-        max_int: Maximum allowed integer value (255 for byte sequences)
         buffer_size: Number of sequences to generate at once
         device: Torch device to use for computations
         buffer: Tensor of generated sequences
@@ -22,20 +22,17 @@ class SequenceGenerator:
     def __init__(
         self,
         seq_length: int = 8,
-        max_int: int = 255,
-        buffer_size: int = 128,
+        buffer_size: int = 1024,
         device: str = "cpu",
     ) -> None:
         """Initialize the sequence generator.
 
         Args:
             seq_length: Length of sequences to generate
-            max_int: Maximum allowed integer value
             buffer_size: Number of sequences to generate at once
             device: Torch device to use for computations
         """
         self.seq_length = seq_length
-        self.max_int = max_int
         self.buffer_size = buffer_size
         self.device = device
 
@@ -53,30 +50,37 @@ class SequenceGenerator:
         Returns:
             bool: True if sequence is valid, False otherwise
         """
-        return torch.all(sequence >= 0) and torch.all(sequence <= self.max_int)
+        return (sequence >= -MAX_INT).all() and (sequence < MAX_INT).all()
 
     def _generate_buffer(self) -> None:
         """Generate a new buffer of sequences using first-order recurrence relations."""
         # Preallocate the sequence buffer
-        self.buffer = torch.zeros((self.buffer_size, self.seq_length), device=self.device)
+        self.buffer = torch.zeros(
+            (self.buffer_size, self.seq_length),
+            dtype=INT_TYPE,
+            device=self.device,
+        )
 
         # Generate random parameters for each sequence
         a0 = torch.randint(
-            1,
-            10,
+            -5,
+            6,
             (self.buffer_size,),
+            dtype=INT_TYPE,
             device=self.device,
         )
         mult = torch.randint(
-            1,
-            4,
+            -4,
+            5,
             (self.buffer_size,),
+            dtype=INT_TYPE,
             device=self.device,
         )
         add = torch.randint(
-            -self.max_int // 8,
-            self.max_int // 8,
+            -4,
+            5,
             (self.buffer_size,),
+            dtype=INT_TYPE,
             device=self.device,
         )
 
@@ -102,7 +106,11 @@ class SequenceGenerator:
             torch.Tensor: Batch of valid sequences of shape (batch_size, seq_length)
         """
         # Preallocate output tensor
-        batch = torch.empty((batch_size, self.seq_length), device=self.device)
+        batch = torch.empty(
+            (batch_size, self.seq_length),
+            dtype=INT_TYPE,
+            device=self.device,
+        )
         valid_count = 0
 
         while valid_count < batch_size:

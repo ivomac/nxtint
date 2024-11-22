@@ -6,7 +6,7 @@ from nxtint.logits import Logits
 from nxtint.utils.config import GenConfig
 
 
-def test_loss_correct_predictions():
+def test_sequence_loss_correct_predictions():
     """Test loss calculation for correct predictions."""
     # Create logits that strongly predict specific classes
     logits = Logits(torch.zeros((2, 2 * GenConfig.max_int)))
@@ -30,7 +30,7 @@ def test_loss_correct_predictions():
     return
 
 
-def test_loss_distance_penalty():
+def test_sequence_loss_distance_penalty():
     """Test that distance affects loss magnitude."""
     # Create logits for different prediction scenarios
     logits = Logits(torch.zeros((3, 2 * GenConfig.max_int + 1)))
@@ -51,7 +51,7 @@ def test_loss_distance_penalty():
     return
 
 
-def test_loss_alpha_scaling():
+def test_sequence_loss_alpha_scaling():
     """Test that alpha parameter scales distance penalty correctly."""
     # Create logits predicting +10 when target is +2
     logits = Logits(torch.zeros((1, 2 * GenConfig.max_int + 1)))

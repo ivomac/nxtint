@@ -3,105 +3,77 @@
 import torch
 import torch.nn as nn
 
-from nxtint.utils.constants import MAX_INT
-from nxtint.utils.logging import DEBUG, log, setup_logger
-
-logger = setup_logger(__name__, level=DEBUG)
+from .logits import Logits
+from .utils.config import Config
 
 
 class SequenceTransformer(nn.Module):
-    """Transformer model for predicting the next integer in a sequence.
+    """Transformer model for predicting the next integer in a sequence."""
 
-    Attributes:
-        seq_length: Length of input sequences
-        n_layers: Number of transformer layers
-        n_heads: Number of attention heads
-        d_model: Model dimension (2 for number+position encoding)
-        d_ff: Feed-forward network dimension
-    """
-
-    def __init__(
-        self,
-        seq_length: int = 8,
-        n_layers: int = 2,
-        n_heads: int = 4,
-        d_model: int = 64,
-        d_ff: int = 256,
-        device: str = "cpu",
-    ) -> None:
-        """Initialize the model.
-
-        Args:
-            seq_length: Length of input sequences
-            n_layers: Number of transformer layers
-            n_heads: Number of attention heads
-            d_model: Model dimension
-            d_ff: Feed-forward network dimension
-            device: Device to run the model on
-        """
+    def __init__(self):
+        """Initialize the model."""
         # Initialize parent class first
         super().__init__()
-        self.seq_length = seq_length
-        self.device = device
-        self.to(device)
 
         # Integer embedding layer
         self.int_embedding = nn.Embedding(
-            2 * MAX_INT,  # -MAX_INT to +MAX_INT-1
-            d_model,
-            device=device,
-            dtype=torch.float32,
+            2 * Config.gen.max_int,
+            Config.model.d_model,
+            dtype=Config.dtype.float,
         )
 
         # Positional embedding layer
         self.pos_embedding = nn.Embedding(
-            seq_length,
-            d_model,
-            device=device,
+            Config.model.x_length,
+            Config.model.d_model,
+            dtype=Config.dtype.float,
         )
 
         # Transformer layers
         encoder_layer = nn.TransformerEncoderLayer(
-            d_model=d_model,
-            nhead=n_heads,
-            dim_feedforward=d_ff,
-            dropout=0.0,
-            activation="gelu",
-            batch_first=True,
-            norm_first=False,
-            device=device,
+            d_model=Config.model.d_model,
+            nhead=Config.model.n_heads,
+            dim_feedforward=Config.model.d_ff,
+            dropout=Config.model.dropout,
+            activation=Config.model.activation,
+            batch_first=Config.model.batch_first,
+            norm_first=Config.model.norm_first,
+            dtype=Config.dtype.float,
         )
 
         self.transformer = nn.TransformerEncoder(
             encoder_layer,
-            num_layers=n_layers,
+            num_layers=Config.model.n_layers,
         )
 
         # Output projection
-        self.output = nn.Linear(d_model, 2 * MAX_INT, device=device)
+        self.output = nn.Linear(
+            Config.model.d_model,
+            2 * Config.gen.max_int,
+            dtype=Config.dtype.float,
+        )
         return
 
-    @log(logger, level=DEBUG)
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: torch.Tensor) -> Logits:
         """Forward pass of the model.
 
         Args:
-            x: Input tensor of shape (batch_size, seq_length) containing integers
+            x: Input tensor of shape (batch_size, x_length) containing integers
 
         Returns:
-            torch.Tensor: Logits for next integer prediction (batch_size, 2 * MAX_INT)
+            Logits: Logits object for next integer prediction (batch_size, 2 * MAX_INT)
         """
-        # Move input to device
-        x = x.to(self.device)
-
         # Shift input to be 0 to 2*MAX_INT for embedding lookup
-        x_shifted = x + MAX_INT
+        x_shifted = x + Config.gen.max_int
 
         # Get integer embeddings
         int_embeddings = self.int_embedding(x_shifted)
 
         # Create position indices and get embeddings
-        positions = torch.arange(self.seq_length, device=self.device)
+        positions = torch.arange(
+            Config.model.x_length,
+            dtype=Config.dtype.int,
+        )
         pos_embeddings = self.pos_embedding(positions)
 
         # Add positional embeddings to integer embeddings
@@ -114,17 +86,4 @@ class SequenceTransformer(nn.Module):
         final = transformed[:, -1]
 
         # Project to output logits
-        return self.output(final)
-
-    @log(logger, level=DEBUG)
-    def predict(self, x: torch.Tensor) -> torch.Tensor:
-        """Get the most likely next number prediction.
-
-        Args:
-            x: Input tensor of shape (batch_size, seq_length) containing integers
-
-        Returns:
-            torch.Tensor: Predicted next integers of shape (batch_size,)
-        """
-        # Get logits and return argmax
-        return torch.argmax(self(x), dim=-1) - MAX_INT
+        return Logits(self.output(final))

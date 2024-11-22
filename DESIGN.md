@@ -85,15 +85,6 @@ Options:
   - [ ] Swish
   - Rationale: GELU is standard in modern transformers, provides smoother gradients
 
-## Layer Normalization
-Options:
-  - [ ] No layer normalization
-  - [ ] Pre-norm (normalize before attention/FFN)
-  - [x] Post-norm (normalize after attention/FFN)
-    - epsilon = 1e-5
-    - Learn scale and bias parameters
-  - Rationale: Post-norm is the original transformer design, works well for smaller models
-
 ## Training Approach
 Options:
   - [x] Train on all prefixes (causal modeling/masking)

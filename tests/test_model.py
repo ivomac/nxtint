@@ -9,8 +9,8 @@ from nxtint.utils.constants import MAX_INT
 
 def test_model_forward():
     """Test basic forward pass of the model."""
-    # Create model
-    model = SequenceTransformer()
+    # Create model with default 64-dim embeddings
+    model = SequenceTransformer(d_model=64, n_heads=4, d_ff=256)
 
     # Create sample batch
     batch_size = 3

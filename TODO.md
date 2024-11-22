@@ -4,10 +4,10 @@
 - Sequence Length
   - [x] 8 previous numbers chosen
 - Embedding Approach
-  - [x] Fixed (integer/max_integer, position/max_position) tuple
+  - [x] Regular embedding layer + positional encoding
 - Model Architecture (Partial)
   - [x] 2 transformer layers
-  - [x] 2 attention heads
+  - [x] 4 attention heads
   - [x] 32 feed-forward dimension
   - [x] No dropout (0.0)
 - Activation Functions
@@ -27,8 +27,6 @@
   - [x] Implementation with α scaling factor
 - Loss Handling for Masked Positions
   - [ ] Include all positions with normalization
-- Layer Normalization
-  - [ ] Post-norm implementation
 - Training Approach
   - [ ] Train on all prefixes
 - Training Parameters

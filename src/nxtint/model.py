@@ -24,9 +24,9 @@ class SequenceTransformer(nn.Module):
         self,
         seq_length: int = 8,
         n_layers: int = 2,
-        n_heads: int = 2,
-        d_model: int = 2,
-        d_ff: int = 32,
+        n_heads: int = 4,
+        d_model: int = 64,
+        d_ff: int = 256,
         device: str = "cpu",
     ) -> None:
         """Initialize the model.
@@ -45,10 +45,18 @@ class SequenceTransformer(nn.Module):
         self.device = device
         self.to(device)
 
-        # Create position indices tensor once
-        self.register_buffer(
-            "positions",
-            torch.arange(seq_length).float() / (seq_length - 1),
+        # Integer embedding layer
+        self.int_embedding = nn.Embedding(
+            2 * MAX_INT + 1,  # -MAX_INT to +MAX_INT
+            d_model,
+            device=device,
+        )
+
+        # Positional embedding layer
+        self.pos_embedding = nn.Embedding(
+            seq_length,
+            d_model,
+            device=device,
         )
 
         # Transformer layers
@@ -62,13 +70,11 @@ class SequenceTransformer(nn.Module):
             norm_first=False,
             device=device,
         )
+
         self.transformer = nn.TransformerEncoder(
             encoder_layer,
             num_layers=n_layers,
         )
-
-        # Final layer norm (post-norm)
-        self.norm = nn.LayerNorm(d_model, device=device)
 
         # Output projection
         self.output = nn.Linear(d_model, INT_N, device=device)
@@ -84,23 +90,33 @@ class SequenceTransformer(nn.Module):
         Returns:
             torch.Tensor: Logits for next integer prediction (batch_size, INT_N)
         """
-        # Move input to device and create embeddings (batch_size, seq_length, 2)
+        # Move input to device
         x = x.to(self.device)
 
-        numbers = x.float() / MAX_INT
-        positions = self.positions.expand(x.size(0), -1).to(self.device)
+        # Shift input to be 0 to 2*MAX_INT for embedding lookup
+        x_shifted = x + MAX_INT
 
-        # Combine into embedding
-        embeddings = torch.stack([numbers, positions], dim=-1)
+        # Get integer embeddings
+        int_embeddings = self.int_embedding(x_shifted)
+
+        # Create position indices and get embeddings
+        positions = torch.arange(self.seq_length, device=self.device)
+        pos_embeddings = self.pos_embedding(positions)
+
+        # Add positional embeddings to integer embeddings
+        embeddings = int_embeddings + pos_embeddings.unsqueeze(0)
+
+        # Normalize input embeddings
+        normalized_input = self.input_norm(embeddings)
 
         # Pass through transformer
-        transformed = self.transformer(embeddings)
+        transformed = self.transformer(normalized_input)
 
         # Use final sequence position for prediction
         final = transformed[:, -1]
 
         # Apply final layer norm (post-norm)
-        normalized = self.norm(final)
+        normalized = self.final_norm(final)
 
         # Project to output logits
         return self.output(normalized)

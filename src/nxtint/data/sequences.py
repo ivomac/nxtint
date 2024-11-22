@@ -2,7 +2,7 @@
 
 import torch
 
-from nxtint.utils.constants import INT_TYPE, MAX_INT
+from nxtint.utils.constants import INT_TYPE, MAX_INT, NAN
 from nxtint.utils.logging import DEBUG, log, setup_logger
 
 logger = setup_logger(__name__, level=DEBUG)
@@ -39,6 +39,10 @@ class SequenceGenerator:
         # Initialize empty buffer and position
         self.buffer = torch.empty(0, device=self.device)
         self.current_idx = 0
+
+        # Initialize counters
+        self.total_sequences = 0
+        self.invalid_sequences = 0
         return
 
     def is_valid(self, sequence: torch.Tensor) -> torch.Tensor:
@@ -51,6 +55,16 @@ class SequenceGenerator:
             bool: True if sequence is valid, False otherwise
         """
         return (sequence >= -MAX_INT).all() and (sequence < MAX_INT).all()
+
+    def _log_invalid(self):
+        # Log statistics periodically
+        if self.total_sequences:
+            invalid_percent = 100 * self.invalid_sequences / self.total_sequences
+            logger.debug(
+                f"Invalid sequences: {self.invalid_sequences}/{self.total_sequences} "
+                f"({invalid_percent:.1f}%)"
+            )
+        return
 
     def _generate_buffer(self) -> None:
         """Generate a new buffer of sequences using first-order recurrence relations."""
@@ -70,15 +84,15 @@ class SequenceGenerator:
             device=self.device,
         )
         mult = torch.randint(
-            -4,
-            5,
+            -2,
+            3,
             (self.buffer_size,),
             dtype=INT_TYPE,
             device=self.device,
         )
         add = torch.randint(
-            -4,
-            5,
+            -6,
+            7,
             (self.buffer_size,),
             dtype=INT_TYPE,
             device=self.device,
@@ -93,6 +107,7 @@ class SequenceGenerator:
 
         # Reset position counter
         self.current_idx = 0
+
         return
 
     @log(logger, level=DEBUG)
@@ -126,13 +141,18 @@ class SequenceGenerator:
 
             # Find valid sequences
             for seq in candidates:
+                self.total_sequences += 1
                 if self.is_valid(seq):
                     batch[valid_count] = seq
                     valid_count += 1
                     if valid_count == batch_size:
                         break
+                else:
+                    self.invalid_sequences += 1
 
             # Update position
             self.current_idx += len(candidates)
+
+        self._log_invalid()
 
         return batch

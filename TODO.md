@@ -32,12 +32,12 @@
 - Training Approach
   - [ ] Train on all prefixes
 - Training Parameters
-  - [ ] Batch size 32
-  - [ ] Linear warmup + cosine decay
-  - [ ] AdamW configuration
-  - [ ] 50-100 epochs
+  - [x] Batch size 32
+  - [x] Linear warmup + cosine decay
+  - [x] AdamW configuration
+  - [x] 50-100 epochs
 - Early Stopping Criteria
-  - [ ] Validation loss plateau monitoring
+  - [x] Validation loss plateau monitoring
 - Curriculum Learning Strategy
   - [ ] Phase 1: Simple recurrence
   - [ ] Phase 2: Nested recurrence

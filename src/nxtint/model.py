@@ -27,6 +27,7 @@ class SequenceTransformer(nn.Module):
         n_heads: int = 2,
         d_model: int = 2,
         d_ff: int = 32,
+        device: str = "cpu",
     ) -> None:
         """Initialize the model.
 
@@ -36,10 +37,13 @@ class SequenceTransformer(nn.Module):
             n_heads: Number of attention heads
             d_model: Model dimension
             d_ff: Feed-forward network dimension
+            device: Device to run the model on
         """
         # Initialize parent class first
         super().__init__()
         self.seq_length = seq_length
+        self.device = device
+        self.to(device)
 
         # Create position indices tensor once
         self.register_buffer(
@@ -56,14 +60,18 @@ class SequenceTransformer(nn.Module):
             activation="gelu",
             batch_first=True,
             norm_first=False,
+            device=device,
         )
         self.transformer = nn.TransformerEncoder(
             encoder_layer,
             num_layers=n_layers,
         )
 
+        # Final layer norm (post-norm)
+        self.norm = nn.LayerNorm(d_model, device=device)
+
         # Output projection
-        self.output = nn.Linear(d_model, INT_N)
+        self.output = nn.Linear(d_model, INT_N, device=device)
         return
 
     @log(logger, level=DEBUG)
@@ -76,9 +84,10 @@ class SequenceTransformer(nn.Module):
         Returns:
             torch.Tensor: Logits for next integer prediction (batch_size, INT_N)
         """
-        # Create embeddings (batch_size, seq_length, 2)
+        # Move input to device and create embeddings (batch_size, seq_length, 2)
+        x = x.to(self.device)
         numbers = x.float() / MAX_INT
-        positions = self.positions.expand(x.size(0), -1)
+        positions = self.positions.expand(x.size(0), -1).to(self.device)
 
         # Combine into embedding
         embeddings = torch.stack([numbers, positions], dim=-1)
@@ -89,8 +98,11 @@ class SequenceTransformer(nn.Module):
         # Use final sequence position for prediction
         final = transformed[:, -1]
 
+        # Apply final layer norm (post-norm)
+        normalized = self.norm(final)
+
         # Project to output logits
-        return self.output(final)
+        return self.output(normalized)
 
     @log(logger, level=DEBUG)
     def predict(self, x: torch.Tensor) -> torch.Tensor:

@@ -47,8 +47,8 @@
 - Generation Decoding Strategy
   - [ ] Greedy decoding
 - Gradient Clipping
-  - [ ] Global norm clipping
+  - [x] Global norm clipping
 - Validation
-  - [ ] On-the-fly sequence generation
+  - [x] On-the-fly sequence generation
 - Validation Frequency
-  - [ ] Every 1000 training steps
+  - [x] Every 1000 training steps

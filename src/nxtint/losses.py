@@ -31,7 +31,7 @@ def sequence_loss(
     target_classes = targets + MAX_INT
 
     # Calculate standard cross-entropy loss
-    base_loss = functional.cross_entropy(logits, target_classes, reduction="none")
+    base_loss = functional.cross_entropy(logits, target_classes.long(), reduction="none")
 
     # Calculate predicted class indices
     pred_classes = torch.argmax(logits, dim=-1)

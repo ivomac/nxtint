@@ -21,7 +21,7 @@ class SequenceGenerator:
 
     def __init__(
         self,
-        seq_length: int = 8,
+        seq_length: int = 9,
         buffer_size: int = 1024,
         device: str = "cpu",
     ) -> None:

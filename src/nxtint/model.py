@@ -86,6 +86,7 @@ class SequenceTransformer(nn.Module):
         """
         # Move input to device and create embeddings (batch_size, seq_length, 2)
         x = x.to(self.device)
+
         numbers = x.float() / MAX_INT
         positions = self.positions.expand(x.size(0), -1).to(self.device)
 

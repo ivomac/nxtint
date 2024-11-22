@@ -17,8 +17,8 @@
 
 ## TODO ⏳
 - Data Generation
-  - [ ] Data generation module
-  - [ ] First-order recurrence sequences
+  - [x] Data generation module
+  - [x] First-order recurrence sequences
   - [ ] Nested recurrence sequences
   - [ ] Combined/transformed sequences
 - Loss Function

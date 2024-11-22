@@ -19,7 +19,7 @@ def sequence_loss(
     """Calculate distance-weighted cross entropy loss.
 
     Args:
-        logits: Raw model outputs of shape (batch_size, INT_N)
+        logits: Raw model outputs of shape (batch_size, 2 * MAX_INT)
         targets: Target integers of shape (batch_size,)
         alpha: Weight factor for distance penalty (default: 0.1)
         reduce: Whether to return mean loss (default: True)
@@ -27,7 +27,7 @@ def sequence_loss(
     Returns:
         torch.Tensor: loss values OR mean loss value
     """
-    # Convert targets to class indices (shift from [-MAX_INT, MAX_INT] to [0, INT_N])
+    # Convert targets to class indices (shift from [-MAX_INT, MAX_INT] to [0, 2 * MAX_INT])
     target_classes = targets + MAX_INT
 
     # Calculate standard cross-entropy loss

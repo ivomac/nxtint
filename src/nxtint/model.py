@@ -3,7 +3,7 @@
 import torch
 import torch.nn as nn
 
-from nxtint.utils.constants import INT_N, MAX_INT
+from nxtint.utils.constants import MAX_INT
 from nxtint.utils.logging import DEBUG, log, setup_logger
 
 logger = setup_logger(__name__, level=DEBUG)
@@ -47,9 +47,10 @@ class SequenceTransformer(nn.Module):
 
         # Integer embedding layer
         self.int_embedding = nn.Embedding(
-            2 * MAX_INT + 1,  # -MAX_INT to +MAX_INT
+            2 * MAX_INT,  # -MAX_INT to +MAX_INT-1
             d_model,
             device=device,
+            dtype=torch.float32,
         )
 
         # Positional embedding layer
@@ -77,7 +78,7 @@ class SequenceTransformer(nn.Module):
         )
 
         # Output projection
-        self.output = nn.Linear(d_model, INT_N, device=device)
+        self.output = nn.Linear(d_model, 2 * MAX_INT, device=device)
         return
 
     @log(logger, level=DEBUG)
@@ -88,7 +89,7 @@ class SequenceTransformer(nn.Module):
             x: Input tensor of shape (batch_size, seq_length) containing integers
 
         Returns:
-            torch.Tensor: Logits for next integer prediction (batch_size, INT_N)
+            torch.Tensor: Logits for next integer prediction (batch_size, 2 * MAX_INT)
         """
         # Move input to device
         x = x.to(self.device)
@@ -106,20 +107,14 @@ class SequenceTransformer(nn.Module):
         # Add positional embeddings to integer embeddings
         embeddings = int_embeddings + pos_embeddings.unsqueeze(0)
 
-        # Normalize input embeddings
-        normalized_input = self.input_norm(embeddings)
-
         # Pass through transformer
-        transformed = self.transformer(normalized_input)
+        transformed = self.transformer(embeddings)
 
         # Use final sequence position for prediction
         final = transformed[:, -1]
 
-        # Apply final layer norm (post-norm)
-        normalized = self.final_norm(final)
-
         # Project to output logits
-        return self.output(normalized)
+        return self.output(final)
 
     @log(logger, level=DEBUG)
     def predict(self, x: torch.Tensor) -> torch.Tensor:

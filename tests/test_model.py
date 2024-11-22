@@ -35,7 +35,7 @@ def test_model_predict():
 
     # Create sample batch
     batch_size = 3
-    x = torch.randint(0, 256, (batch_size, 8))
+    x = torch.randint(-MAX_INT, MAX_INT, (batch_size, 8))
 
     # Get predictions
     predictions = model.predict(x)

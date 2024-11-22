@@ -2,11 +2,9 @@
 
 import torch
 
-INT_TYPE = torch.int16
+INT_TYPE = torch.int32
 
-INT_N = 256
-
-MAX_INT = 128
+MAX_INT = 512
 
 NAN = torch.tensor(float("nan"), dtype=torch.float32)
 

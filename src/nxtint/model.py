@@ -65,8 +65,8 @@ class SequenceTransformer(nn.Module):
         self.weights_file = self.save_dir / Config.save.weights_file
         self.config_file = self.save_dir / Config.save.config_file
 
-        # Try to load existing model
         self.init_layers()
+        # Try to load existing model
         self.load_weights()
         return
 
@@ -146,6 +146,18 @@ class SequenceTransformer(nn.Module):
             logger.info(f"Loaded existing model {self.model_id}")
         else:
             logger.info(f"No existing model found with ID {self.model_id}")
+        return
+
+    @log_io(logger)
+    def delete(self):
+        """Delete saved model files."""
+        if self.save_dir.exists():
+            # Delete individual files first
+            for file in self.save_dir.iterdir():
+                file.unlink()
+            # Remove the empty directory
+            self.save_dir.rmdir()
+            logger.info(f"Deleted model directory {self.save_dir}")
         return
 
     @log_io(logger)

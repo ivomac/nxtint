@@ -67,3 +67,6 @@ def test_model_save_load():
     assert model2.transformer.layers[0].self_attn.num_heads == 8
     assert model2.transformer.layers[0].self_attn.embed_dim == 128
     assert model2.int_embedding.num_embeddings == 512  # 2 * max_int
+
+    # Clean up
+    model1.delete()

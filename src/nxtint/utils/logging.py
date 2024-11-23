@@ -78,9 +78,11 @@ def log_io(logger: logging.Logger, level: int = DEBUG) -> Callable:
             func_name = func.__name__
             arg_names = ", ".join(get_name(a) for a in args)
             kwarg_names = ", ".join(f"{k}=..." for k in kwargs)
-            logger.log(level, f"\n>>> Calling {func_name}({arg_names}, {kwarg_names})")
             result = func(*args, **kwargs)
-            logger.log(level, f"\n>>> Returned {type(result).__name__}")
+            logger.log(
+                level,
+                f"\n>>> {func_name}({arg_names}, {kwarg_names})" + f" -> {type(result).__name__}",
+            )
             return result
 
         return wrapper

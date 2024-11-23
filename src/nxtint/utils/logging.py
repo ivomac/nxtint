@@ -13,7 +13,7 @@ INFO = logging.INFO
 DEBUG = logging.DEBUG
 
 FMT = "%(asctime)s - %(levelname)s - %(module)s: %(message)s"
-DATEFMT = "%Y-%m-%d %H:%M:%S"
+DATEFMT = "%y-%m-%d %H:%M:%S"
 
 
 def setup_logger(

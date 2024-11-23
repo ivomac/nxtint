@@ -75,28 +75,35 @@ class Trainer:
         return
 
     @log_io(logger)
-    def validate(self, num_batches: int = 10) -> float:
-        """Run validation and return mean loss.
+    def validate(self, num_batches: int = 10) -> tuple[float, float]:
+        """Run validation and return mean loss and accuracy.
 
         Args:
             num_batches: Number of validation batches
 
         Returns:
             float: Mean validation loss
+            float: Mean validation accuracy
         """
         self.model.eval()
         total_loss = 0.0
+        accuracy = 0.0
 
         with torch.no_grad():
             for _ in range(num_batches):
                 # Get batch of sequences
                 x, y = self.val_gen.generate_batch(Config.train.batch_size)
 
-                # Get predictions and loss
-                total_loss += self.model(x).loss(y).mean().item()
+                # Get predictions, loss and accuracy
+                logits = self.model(x)
+                total_loss += logits.loss(y).mean().item()
+                accuracy += logits.accuracy(y)
+
+        mean_loss = total_loss / num_batches
+        mean_accuracy = accuracy / num_batches
 
         self.model.train()
-        return total_loss / num_batches
+        return mean_loss, mean_accuracy
 
     @log_io(logger)
     def train(self):
@@ -124,21 +131,24 @@ class Trainer:
             self.scheduler.step()
 
             # Log training loss
-            if step % 100 == 0:
-                self.train_logger.info(f"Step {step}, Loss: {loss.item():.3g}")
+            log_training_step = step % 100 == 0
+            validation_step = step % Config.train.validate_every == 0
+            if log_training_step or validation_step:
+                self.train_logger.info(f"Step {step}")
+                if log_training_step:
+                    self.train_logger.info(f"Training Loss:       {loss.item():.3g}")
+                if validation_step:
+                    loss, accuracy = self.validate()
+                    self.train_logger.info(f"Validation Loss:     {loss:.3g}")
+                    self.train_logger.info(f"Validation Accuracy: {accuracy:.1f}%")
 
-            # Validate and check early stopping
-            if step % Config.train.validate_every == 0:
-                val_loss = self.validate()
-                self.train_logger.info(f"Step {step}, Validation Loss: {val_loss:.3g}")
-
-                # Check early stopping
-                best_weights = self.early_stopping(self.model, val_loss)
-                if best_weights is not None:
-                    self.train_logger.info("Early stopping triggered")
-                    # Restore best weights
-                    self.model.load_state_dict(best_weights)
-                    break
+                    # Check early stopping
+                    best_weights = self.early_stopping(self.model, loss)
+                    if best_weights is not None:
+                        self.train_logger.info("Early stopping triggered")
+                        # Restore best weights
+                        self.model.load_state_dict(best_weights)
+                        break
 
             step += 1
 

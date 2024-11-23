@@ -20,9 +20,11 @@ def test_validation():
     model = SequenceTransformer()
     trainer = Trainer(model)
 
-    val_loss = trainer.validate(num_batches=2)
-    assert isinstance(val_loss, float)
-    assert val_loss > 0
+    loss, accuracy = trainer.validate(num_batches=2)
+    assert isinstance(loss, float)
+    assert loss > 0
+    assert isinstance(accuracy, float)
+    assert accuracy >= 0
 
 
 def test_early_stopping():

@@ -59,3 +59,24 @@ def test_sequence_loss_alpha_scaling():
 
     # Verify alpha scales penalty appropriately
     assert losses[0] < losses[1] < losses[2]
+
+
+def test_accuracy():
+    """Test accuracy calculation."""
+    # Create logits that strongly predict specific classes
+    logits = Logits(torch.zeros((3, 2 * Config.gen.max_int + 1)))
+    logits.tensor[0, Config.gen.max_int + 1] = 100.0  # Predict +1
+    logits.tensor[1, Config.gen.max_int + 2] = 100.0  # Predict +2
+    logits.tensor[2, Config.gen.max_int + 3] = 100.0  # Predict +3
+
+    # Test perfect accuracy
+    perfect_targets = torch.tensor([1, 2, 3])
+    assert logits.accuracy(perfect_targets) == 100.0
+
+    # Test partial accuracy
+    partial_targets = torch.tensor([1, 0, 3])  # Second prediction wrong
+    assert 66.66 <= logits.accuracy(partial_targets) <= 66.67
+
+    # Test zero accuracy
+    wrong_targets = torch.tensor([-1, 0, 2])  # All predictions wrong
+    assert logits.accuracy(wrong_targets) == 0.0

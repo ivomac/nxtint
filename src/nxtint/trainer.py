@@ -7,7 +7,7 @@ from torch.optim.lr_scheduler import CosineAnnealingLR
 
 from .data.sequences import FOSequenceGenerator
 from .model import SequenceTransformer
-from .utils.config import EarlyStoppingConfig, TrainConfig
+from .utils.config import Config
 from .utils.constants import INF
 from .utils.logging import log_io, setup_logger
 
@@ -28,21 +28,25 @@ class Trainer:
             model: Model to train
         """
         self.model = model
+        self.init_components()
+        return
 
+    def init_components(self):
+        """Set training components."""
         # Setup training components
         self.optimizer = AdamW(
             self.model.parameters(),
-            lr=TrainConfig.lr,
-            betas=TrainConfig.betas,
-            eps=TrainConfig.eps,
-            weight_decay=TrainConfig.weight_decay,
+            lr=Config.train.lr,
+            betas=Config.train.betas,
+            eps=Config.train.eps,
+            weight_decay=Config.train.weight_decay,
         )
 
         # Create cosine scheduler with linear warmup
         self.scheduler = CosineAnnealingLR(
             self.optimizer,
-            T_max=TrainConfig.max_steps - TrainConfig.warmup_steps,
-            eta_min=TrainConfig.eta_min,
+            T_max=Config.train.max_steps - Config.train.warmup_steps,
+            eta_min=Config.train.eta_min,
         )
 
         self.early_stopping = EarlyStopping()
@@ -68,7 +72,7 @@ class Trainer:
         with torch.no_grad():
             for _ in range(num_batches):
                 # Get batch of sequences
-                x, y = self.val_gen.generate_batch(TrainConfig.batch_size)
+                x, y = self.val_gen.generate_batch(Config.train.batch_size)
 
                 # Get predictions and loss
                 logits = self.model(x)
@@ -85,9 +89,9 @@ class Trainer:
         step = 0
         best_weights = None
 
-        while step < TrainConfig.max_steps:
+        while step < Config.train.max_steps:
             # Get batch of sequences
-            x, y = self.train_gen.generate_batch(TrainConfig.batch_size)
+            x, y = self.train_gen.generate_batch(Config.train.batch_size)
 
             # Forward pass
             logits = self.model(x)
@@ -98,7 +102,7 @@ class Trainer:
             loss.backward()
 
             # Clip gradients
-            clip_grad_norm_(self.model.parameters(), TrainConfig.clip_norm)
+            clip_grad_norm_(self.model.parameters(), Config.train.clip_norm)
 
             # Update weights
             self.optimizer.step()
@@ -109,7 +113,7 @@ class Trainer:
                 logger.info(f"Step {step}, Loss: {loss.item():.3g}")
 
             # Validate and check early stopping
-            if step % TrainConfig.validate_every == 0:
+            if step % Config.train.validate_every == 0:
                 val_loss = self.validate()
                 logger.info(f"Step {step}, Validation Loss: {val_loss:.3g}")
 
@@ -153,7 +157,7 @@ class EarlyStopping:
         Returns:
             dict: Best model state dict if stopping, None otherwise
         """
-        if val_loss < self.best_loss - EarlyStoppingConfig.min_delta:
+        if val_loss < self.best_loss - Config.early.min_delta:
             # New best loss found
             self.best_loss = val_loss
             self.counter = 0
@@ -162,7 +166,7 @@ class EarlyStopping:
 
         # No improvement
         self.counter += 1
-        if self.counter >= EarlyStoppingConfig.patience:
+        if self.counter >= Config.early.patience:
             # Return best weights when stopping
             return self.best_weights
         return None

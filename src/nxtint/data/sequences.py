@@ -45,7 +45,7 @@ class FOSequenceGenerator:
         """Generate a new buffer of sequences using first-order recurrence relations."""
         # Preallocate the sequence buffer
         self.buffer = torch.zeros(
-            (Config.gen.buffer_size, Config.model.x_length + 1),
+            (Config.gen.buffer_size, Config.model.x_len + 1),
             dtype=Config.dtype.int,
         )
 
@@ -73,7 +73,7 @@ class FOSequenceGenerator:
         self.buffer[:, 0] = a0
 
         # Generate each sequence using the recurrence relation
-        for i in range(1, Config.model.x_length + 1):
+        for i in range(1, Config.model.x_len + 1):
             self.buffer[:, i] = self.buffer[:, i - 1] * mult + add
 
         # Reset position counter
@@ -89,11 +89,11 @@ class FOSequenceGenerator:
             batch_size: Number of sequences to generate
 
         Returns:
-            torch.Tensor: Batch of valid sequences of shape (batch_size, x_length)
+            torch.Tensor: Batch of valid sequences of shape (batch_size, x_len)
         """
         # Preallocate output tensor
         batch = torch.empty(
-            (batch_size, Config.model.x_length),
+            (batch_size, Config.model.x_len),
             dtype=Config.dtype.int,
         )
         y = torch.empty(

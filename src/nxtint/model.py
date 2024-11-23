@@ -16,20 +16,55 @@ logger = setup_logger(__name__)
 class SequenceTransformer(nn.Module):
     """Transformer model for predicting the next integer in a sequence."""
 
+    @classmethod
+    @log_io(logger)
+    def load_config(cls, model_id: str | None) -> dict:
+        """Load configuration from saved model.
+
+        Args:
+            model_id: Model identifier
+
+        Returns:
+            dict: Saved configuration parameters
+        """
+        if model_id is None:
+            logger.info("No model ID provided")
+            return {}
+
+        config_path = Config.save.base_dir / model_id / Config.save.config_file
+        if not config_path.is_file():
+            logger.info(f"No config file found with ID {model_id}")
+            return {}
+
+        with open(config_path) as f:
+            logger.info(f"Found configuration for model {model_id}")
+            return json.load(f)
+
     def __init__(self, model_id: str | None = None):
         """Initialize the model.
 
         Args:
             model_id: Unique identifier for the model. If None, generates new ID.
-                     If provided, attempts to load existing model with this ID.
+                    Attempts to load existing model weights with this ID.
         """
         super().__init__()
 
         # Set or generate model ID
-        self.model_id = model_id or str(uuid.uuid4())
+        self.model_id = str(uuid.uuid4()) if model_id is None else model_id
         self.save_dir = Config.save.base_dir / self.model_id
+        self.weights_file = self.save_dir / Config.save.weights_file
+        self.config_file = self.save_dir / Config.save.config_file
 
+        # Try to load existing model
+        self.init_layers()
+        self.load_weights()
+        return
+
+    @log_io(logger)
+    def init_layers(self):
+        """Initialize model layers."""
         # Integer embedding layer
+        self.int_shift = Config.gen.max_int
         self.int_embedding = nn.Embedding(
             2 * Config.gen.max_int,
             Config.model.d_model,
@@ -37,8 +72,13 @@ class SequenceTransformer(nn.Module):
         )
 
         # Positional embedding layer
+        self.positions = torch.arange(
+            Config.model.x_len,
+            dtype=Config.dtype.int,
+        )
+
         self.pos_embedding = nn.Embedding(
-            Config.model.x_length,
+            Config.model.x_len,
             Config.model.d_model,
             dtype=Config.dtype.float,
         )
@@ -66,10 +106,6 @@ class SequenceTransformer(nn.Module):
             2 * Config.gen.max_int,
             dtype=Config.dtype.float,
         )
-
-        # Try to load existing model
-        if model_id is not None:
-            self.load()
         return
 
     @log_io(logger)
@@ -79,31 +115,27 @@ class SequenceTransformer(nn.Module):
         self.save_dir.mkdir(parents=True, exist_ok=True)
 
         # Save model weights
-        weights_path = self.save_dir / Config.save.weights_file
-        torch.save(self.state_dict(), weights_path)
+        torch.save(self.state_dict(), self.weights_file)
 
         # Save configuration
-        config_path = self.save_dir / Config.save.config_file
         config = {
-            "model_id": self.model_id,
             "model": {k: v for k, v in vars(Config.model).items() if not k.startswith("_")},
             "gen": {k: v for k, v in vars(Config.gen).items() if not k.startswith("_")},
         }
-        with open(config_path, "w") as f:
+        with self.config_file.open("w") as f:
             json.dump(config, f, indent=2)
 
         logger.info(f"Saved model to {self.save_dir}")
         return
 
     @log_io(logger)
-    def load(self):
+    def load_weights(self):
         """Load model weights from saved file."""
-        weights_path = self.save_dir / Config.save.weights_file
-        if weights_path.is_file():
-            self.load_state_dict(torch.load(weights_path))
+        if self.weights_file.is_file():
+            self.load_state_dict(torch.load(self.weights_file, weights_only=True))
             logger.info(f"Loaded existing model {self.model_id}")
         else:
-            logger.warning(f"No existing model found with ID {self.model_id}")
+            logger.info(f"No existing model found with ID {self.model_id}")
         return
 
     @log_io(logger)
@@ -111,23 +143,16 @@ class SequenceTransformer(nn.Module):
         """Forward pass of the model.
 
         Args:
-            x: Input tensor of shape (batch_size, x_length) containing integers
+            x: Input tensor of shape (batch_size, x_len) containing integers
 
         Returns:
             Logits: Logits object for next integer prediction (batch_size, 2 * MAX_INT)
         """
-        # Shift input to be 0 to 2*MAX_INT for embedding lookup
-        x_shifted = x + Config.gen.max_int
-
         # Get integer embeddings
-        int_embeddings = self.int_embedding(x_shifted)
+        int_embeddings = self.int_embedding(x + self.int_shift)
 
         # Create position indices and get embeddings
-        positions = torch.arange(
-            Config.model.x_length,
-            dtype=Config.dtype.int,
-        )
-        pos_embeddings = self.pos_embedding(positions)
+        pos_embeddings = self.pos_embedding(self.positions)
 
         # Add positional embeddings to integer embeddings
         embeddings = int_embeddings + pos_embeddings.unsqueeze(0)

@@ -56,7 +56,7 @@ class ModelConfig(metaclass=BaseConfig):
     """Model architecture configuration.
 
     Attributes:
-        x_length: Length of input sequences
+        x_len: Length of input sequences
         n_layers: Number of transformer layers
         n_heads: Number of attention heads
         d_model: Model dimension
@@ -67,7 +67,7 @@ class ModelConfig(metaclass=BaseConfig):
         norm_first: Whether normalization is applied first
     """
 
-    x_length: int = 8
+    x_len: int = 8
     n_layers: int = 2
     n_heads: int = 4
     d_model: int = 64
@@ -186,6 +186,7 @@ class Config(metaclass=BaseConfig):
     Attributes:
         model: Model configuration
         training: Training configuration
+        early: Early stopping configuration
         gen: Data generation configuration
         loss: Loss function configuration
         dtype: Data types configuration
@@ -194,9 +195,41 @@ class Config(metaclass=BaseConfig):
     """
 
     model = ModelConfig
-    training = TrainConfig
+    train = TrainConfig
+    early = EarlyStoppingConfig
     gen = GenConfig
     loss = LossConfig
     dtype = TypeConfig
     save = SaveConfig
     log = LogConfig
+
+    @classmethod
+    @contextmanager
+    def override(cls, **kwargs):
+        """Context manager to set configuration options.
+
+        Args:
+            kwargs: Config attributes (e.g., "model", "gen")
+                to kwargs dictionaries for the corresponding Config class's
+                override method.
+        """
+        config_managers = []
+        try:
+            # Create context managers for each config class
+            for config_name, subkwargs in kwargs.items():
+                if not hasattr(cls, config_name):
+                    raise AttributeError(
+                        f"{config_name} is not a valid attribute of {cls.__name__}."
+                    )
+                config_class = getattr(cls, config_name)
+                config_managers.append(config_class.override(**subkwargs))
+
+            # Enter all context managers
+            for manager in config_managers:
+                manager.__enter__()
+            yield
+        finally:
+            # Exit all context managers in reverse order
+            for manager in reversed(config_managers):
+                manager.__exit__(None, None, None)
+        return

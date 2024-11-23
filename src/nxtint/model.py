@@ -18,6 +18,16 @@ class SequenceTransformer(nn.Module):
 
     @classmethod
     @log_io(logger)
+    def model_list(cls) -> list[str]:
+        """List available models.
+
+        Returns:
+            list[str]: List of model identifiers
+        """
+        return [p.name for p in Config.save.base_dir.iterdir() if p.is_dir()]
+
+    @classmethod
+    @log_io(logger)
     def load_config(cls, model_id: str | None) -> dict:
         """Load configuration from saved model.
 

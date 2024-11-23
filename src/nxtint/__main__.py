@@ -1,11 +1,8 @@
-"""Command-line interface for training sequence prediction models."""
+"""Command-line interface to get a prediction from a model."""
 
 import argparse
 
-import torch
-
 from nxtint.model import SequenceTransformer
-from nxtint.trainer import Trainer
 from nxtint.utils.config import Config
 from nxtint.utils.logging import log_io, setup_logger
 
@@ -14,23 +11,27 @@ logger = setup_logger(__name__)
 
 @log_io(logger)
 def main():
-    """Run model training."""
+    """Run model prediction."""
     parser = argparse.ArgumentParser()
-    parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--model-id", type=str, default=None, help="Load existing model ID")
+    parser.add_argument("input", type=str, help="Comma-separated input sequence")
     args = parser.parse_args()
 
-    # Set random seeds
-    torch.manual_seed(args.seed)
+    # If no model ID is provided, list the available models
+    if args.model_id is None:
+        model_list = SequenceTransformer.model_list()
+        print("Available models:")
+        for model in model_list:
+            print(f"  {model}")
+        return 0
 
     config = SequenceTransformer.load_config(args.model_id)
     with Config.override(**config):
+        sequence = [int(x) for x in args.input.split(",")]
         model = SequenceTransformer(args.model_id)
-        trainer = Trainer(model)
-        trainer.train()
-        model.save()
+        prediction = model.predict(sequence)
+        print(f"Prediction: {prediction}")
 
-    logger.info("Training complete")
     return 0
 
 

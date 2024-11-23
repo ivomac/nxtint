@@ -2,9 +2,10 @@
 
 import argparse
 
-from nxtint.model import SequenceTransformer
-from nxtint.utils.config import Config
-from nxtint.utils.logging import log_io, setup_logger
+from .model import SequenceTransformer
+from .utils.config import Config
+from .utils.ids import ModelID
+from .utils.logging import log_io, setup_logger
 
 logger = setup_logger(__name__)
 
@@ -19,9 +20,8 @@ def main():
 
     # If no model ID is provided, list the available models
     if args.model_id is None:
-        model_list = SequenceTransformer.model_list()
         print("Available models:")
-        for model in model_list:
+        for model in ModelID.used():
             print(f"  {model}")
         return 0
 
@@ -33,7 +33,3 @@ def main():
         print(f"Prediction: {prediction}")
 
     return 0
-
-
-if __name__ == "__main__":
-    main()

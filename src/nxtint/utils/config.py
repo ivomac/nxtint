@@ -153,14 +153,14 @@ class SaveConfig(metaclass=BaseConfig):
     """Model saving configuration.
 
     Attributes:
-        base_dir: Base directory for saving models
+        dir: Base directory for saving models
         model_dir: Directory for specific model instance
         weights_file: Model weights filename
         config_file: Model config filename
         log_file: Training log filename
     """
 
-    base_dir: Path = Path("./cache/models")
+    dir: Path = Path("./cache/models")
     weights_file: str = "weights.pt"
     config_file: str = "config.json"
     log_file: str = "training.log"
@@ -232,4 +232,11 @@ class Config(metaclass=BaseConfig):
             # Exit all context managers in reverse order
             for manager in reversed(config_managers):
                 manager.__exit__(None, None, None)
+        return
+
+    @classmethod
+    def init_dirs(cls):
+        """Initialize directories for saving models and logs."""
+        cls.log.dir.mkdir(parents=True, exist_ok=True)
+        cls.save.dir.mkdir(parents=True, exist_ok=True)
         return

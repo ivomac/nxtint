@@ -1,13 +1,13 @@
 """Transformer model for integer sequence prediction."""
 
 import json
-import uuid
 
 import torch
 import torch.nn as nn
 
 from .logits import Logits
 from .utils.config import Config
+from .utils.ids import ModelID
 from .utils.logging import log_io, setup_logger
 
 logger = setup_logger(__name__)
@@ -15,16 +15,6 @@ logger = setup_logger(__name__)
 
 class SequenceTransformer(nn.Module):
     """Transformer model for predicting the next integer in a sequence."""
-
-    @classmethod
-    @log_io(logger)
-    def model_list(cls) -> list[str]:
-        """List available models.
-
-        Returns:
-            list[str]: List of model identifiers
-        """
-        return [p.name for p in Config.save.base_dir.iterdir() if p.is_dir()]
 
     @classmethod
     @log_io(logger)
@@ -41,13 +31,13 @@ class SequenceTransformer(nn.Module):
             logger.info("No model ID provided")
             return {}
 
-        config_path = Config.save.base_dir / model_id / Config.save.config_file
+        config_path = Config.save.dir / model_id / Config.save.config_file
         if not config_path.is_file():
-            logger.info(f"No config file found with ID {model_id}")
+            logger.info(f"{model_id} - Config file not found")
             return {}
 
         with open(config_path) as f:
-            logger.info(f"Found configuration for model {model_id}")
+            logger.info(f"{model_id} - Config file found")
             return json.load(f)
 
     def __init__(self, model_id: str | None = None):
@@ -60,8 +50,8 @@ class SequenceTransformer(nn.Module):
         super().__init__()
 
         # Set or generate model ID
-        self.model_id = str(uuid.uuid4()) if model_id is None else model_id
-        self.save_dir = Config.save.base_dir / self.model_id
+        self.model_id = ModelID.new() if model_id is None else model_id
+        self.save_dir = Config.save.dir / self.model_id
         self.weights_file = self.save_dir / Config.save.weights_file
         self.config_file = self.save_dir / Config.save.config_file
 
@@ -135,7 +125,7 @@ class SequenceTransformer(nn.Module):
         with self.config_file.open("w") as f:
             json.dump(config, f, indent=2)
 
-        logger.info(f"Saved model to {self.save_dir}")
+        logger.info(f"{self.model_id} - Model saved")
         return
 
     @log_io(logger)
@@ -143,9 +133,9 @@ class SequenceTransformer(nn.Module):
         """Load model weights from saved file."""
         if self.weights_file.is_file():
             self.load_state_dict(torch.load(self.weights_file, weights_only=True))
-            logger.info(f"Loaded existing model {self.model_id}")
+            logger.info(f"{self.model_id} - Model weights loaded")
         else:
-            logger.info(f"No existing model found with ID {self.model_id}")
+            logger.info(f"{self.model_id} - Model weights not found")
         return
 
     @log_io(logger)
@@ -157,7 +147,7 @@ class SequenceTransformer(nn.Module):
                 file.unlink()
             # Remove the empty directory
             self.save_dir.rmdir()
-            logger.info(f"Deleted model directory {self.save_dir}")
+            logger.info(f"{self.model_id} - Model deleted")
         return
 
     @log_io(logger)

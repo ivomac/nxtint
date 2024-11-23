@@ -12,7 +12,7 @@ logger = setup_logger(__name__)
 @log_io(logger)
 def main():
     """Run model prediction."""
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(add_help=True)
     parser.add_argument("--model-id", type=str, default=None, help="Load existing model ID")
     parser.add_argument("input", type=str, help="Comma-separated input sequence")
     args = parser.parse_args()

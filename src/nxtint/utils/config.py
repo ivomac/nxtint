@@ -175,7 +175,7 @@ class LogConfig(metaclass=BaseConfig):
         level: Logging level
     """
 
-    dir: Path = Path("./cache/logs")
+    dir: Path = Path("./cache")
     file: str = "nxtint.log"
     level: int = INFO
 

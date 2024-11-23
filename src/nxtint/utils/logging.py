@@ -4,6 +4,7 @@ import logging
 import sys
 from collections.abc import Callable
 from functools import wraps
+from pathlib import Path
 from typing import Any
 
 from .config import LogConfig
@@ -15,12 +16,19 @@ FMT = "%(asctime)s - %(levelname)s - %(module)s: %(message)s"
 DATEFMT = "%Y-%m-%d %H:%M:%S"
 
 
-def setup_logger(name: str, level: int | None = None) -> logging.Logger:
+def setup_logger(
+    name: str,
+    level: int | None = None,
+    log_file: Path | None = None,
+    propagate: bool = True,
+) -> logging.Logger:
     """Create and configure a logger.
 
     Args:
         name: Logger name (typically __name__ from calling module)
         level: Logging level for the logger
+        log_file: Optional specific log file path
+        propagate: Whether to propagate logs to parent loggers
 
     Returns:
         logging.Logger: Configured logger instance
@@ -30,25 +38,26 @@ def setup_logger(name: str, level: int | None = None) -> logging.Logger:
 
     logger = logging.getLogger(name)
     logger.setLevel(level)
-    logger.propagate = True  # Allow logs to propagate up to root logger
+    logger.propagate = propagate
 
     # Only add handlers if none exist
     if not logger.handlers:
         # Create formatter
         formatter = logging.Formatter(fmt=FMT, datefmt=DATEFMT)
 
-        # Console handler
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(formatter)
-        console_handler.setLevel(level)
-        logger.addHandler(console_handler)
+        # Console handler (only if propagate is False)
+        if not propagate:
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setFormatter(formatter)
+            console_handler.setLevel(level)
+            logger.addHandler(console_handler)
 
         # File handler
-        log_dir = LogConfig.dir
-        log_file = LogConfig.file
-        log_path = log_dir / log_file
-        log_dir.mkdir(parents=True, exist_ok=True)
-        file_handler = logging.FileHandler(log_path)
+        if log_file is None:
+            log_file = LogConfig.dir / LogConfig.file
+
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        file_handler = logging.FileHandler(log_file)
         file_handler.setFormatter(formatter)
         file_handler.setLevel(level)
         logger.addHandler(file_handler)

@@ -28,6 +28,13 @@ class Trainer:
             model: Model to train
         """
         self.model = model
+        # Setup training-specific logger
+        train_log = model.save_dir / Config.save.log_file
+        self.train_logger = setup_logger(
+            f"{__name__}.{model.model_id[:8]}",
+            log_file=train_log,
+            propagate=False,
+        )
         self.init_components()
         return
 
@@ -110,17 +117,17 @@ class Trainer:
 
             # Log training loss
             if step % 100 == 0:
-                logger.info(f"Step {step}, Loss: {loss.item():.3g}")
+                self.train_logger.info(f"Step {step}, Loss: {loss.item():.3g}")
 
             # Validate and check early stopping
             if step % Config.train.validate_every == 0:
                 val_loss = self.validate()
-                logger.info(f"Step {step}, Validation Loss: {val_loss:.3g}")
+                self.train_logger.info(f"Step {step}, Validation Loss: {val_loss:.3g}")
 
                 # Check early stopping
                 best_weights = self.early_stopping(self.model, val_loss)
                 if best_weights is not None:
-                    logger.info("Early stopping triggered")
+                    self.train_logger.info("Early stopping triggered")
                     # Restore best weights
                     self.model.load_state_dict(best_weights)
                     break

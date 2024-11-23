@@ -14,24 +14,26 @@ from .utils.logging import log_io, setup_logger
 logger = setup_logger(__name__)
 
 
-class Logits(torch.Tensor):
-    """Extended tensor for handling model logits output.
+class Logits:
+    """Handle model logits output.
 
     Inherits from torch.Tensor to provide specialized functionality for
     converting logits to predictions and calculating loss values for
     integer sequence prediction.
-
-    Attributes:
-        All attributes inherited from torch.Tensor
 
     Methods:
         predict: Convert logits to integer predictions
         loss: Calculate distance-weighted cross entropy loss
     """
 
-    def __new__(cls, *args, **kwargs):
-        """Create a new Logits instance."""
-        return super().__new__(cls, *args, **kwargs)
+    def __init__(self, logits: torch.Tensor):
+        """Initialize the Logits object.
+
+        Args:
+            logits: Logits tensor of shape (batch_size, seq_len, num_classes)
+        """
+        self.tensor = logits
+        return
 
     @log_io(logger)
     def predict(self) -> torch.Tensor:
@@ -41,7 +43,7 @@ class Logits(torch.Tensor):
             torch.Tensor: Predicted next integers of shape (batch_size,)
         """
         # Get logits and return argmax
-        return self.argmax(dim=-1) - Config.gen.max_int
+        return self.tensor.argmax(dim=-1) - Config.gen.max_int
 
     @log_io(logger)
     def loss(self, targets: torch.Tensor, alpha: float | None = None) -> torch.Tensor:
@@ -60,10 +62,12 @@ class Logits(torch.Tensor):
         target_classes = targets + Config.gen.max_int
 
         # Calculate standard cross-entropy loss
-        base_loss = nn.functional.cross_entropy(self, target_classes.long(), reduction="none")
+        base_loss = nn.functional.cross_entropy(
+            self.tensor, target_classes.long(), reduction="none"
+        )
 
         # Calculate predicted class indices
-        pred_classes = self.argmax(dim=-1)
+        pred_classes = self.tensor.argmax(dim=-1)
 
         # Calculate absolute distance between predicted and target values
         distance = torch.abs(pred_classes - target_classes)

@@ -15,7 +15,7 @@ def test_model_forward(batch_size=3):
     x = torch.randint(-Config.gen.max_int, Config.gen.max_int, (batch_size, Config.model.x_len))
 
     # Forward pass
-    logits = model(x)
+    logits = model(x).tensor
 
     # Check output shape
     assert logits.shape == (batch_size, Config.gen.max_int * 2)
@@ -34,8 +34,7 @@ def test_model_predict():
     x = torch.randint(-Config.gen.max_int, Config.gen.max_int, (batch_size, Config.model.x_len))
 
     # Get predictions
-    logits = model(x)
-    predictions = logits.predict()
+    predictions = model(x).predict()
 
     # Check output shape
     assert predictions.shape == (batch_size,)

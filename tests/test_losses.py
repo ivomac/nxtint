@@ -10,8 +10,8 @@ def test_loss_correct_predictions():
     """Test loss calculation for correct predictions."""
     # Create logits that strongly predict specific classes
     logits = Logits(torch.zeros((2, 2 * Config.gen.max_int)))
-    logits[0, Config.gen.max_int + 1] = 100.0  # Predict +1
-    logits[1, Config.gen.max_int + 2] = 100.0  # Predict +2
+    logits.tensor[0, Config.gen.max_int + 1] = 100.0  # Predict +1
+    logits.tensor[1, Config.gen.max_int + 2] = 100.0  # Predict +2
 
     # Create matching targets
     targets = torch.tensor([1, 2])
@@ -35,7 +35,7 @@ def test_loss_distance_penalty():
 
     # Case i: Predict +distance
     for i, distance in enumerate([2, 10, 100]):
-        logits[i, Config.gen.max_int + distance] = 100.0
+        logits.tensor[i, Config.gen.max_int + distance] = 100.0
 
     # All targets are +1
     targets = torch.tensor([1, 1, 1])
@@ -51,7 +51,7 @@ def test_loss_alpha_scaling():
     """Test that alpha parameter scales distance penalty correctly."""
     # Create logits predicting +10 when target is +2
     logits = Logits(torch.zeros((1, 2 * Config.gen.max_int + 1)))
-    logits[0, Config.gen.max_int + 10] = 100.0
+    logits.tensor[0, Config.gen.max_int + 10] = 100.0
     targets = torch.tensor([2])
 
     # Calculate loss with different alpha values

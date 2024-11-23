@@ -52,7 +52,7 @@ class SequenceTransformer(nn.Module):
             return {}
 
         with open(config_path) as f:
-            logger.info(f"{model_id} - Config file found")
+            logger.info(f"{model_id} - Config file loaded")
             return json.load(f)
 
     def __init__(self, model_id: str | None = None):

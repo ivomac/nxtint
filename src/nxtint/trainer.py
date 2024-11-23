@@ -93,9 +93,7 @@ class Trainer:
                 x, y = self.val_gen.generate_batch(Config.train.batch_size)
 
                 # Get predictions and loss
-                logits = self.model(x)
-                loss = logits.loss(y).mean()
-                total_loss += loss.item()
+                total_loss += self.model(x).loss(y).mean().item()
 
         self.model.train()
         return total_loss / num_batches
@@ -112,8 +110,7 @@ class Trainer:
             x, y = self.train_gen.generate_batch(Config.train.batch_size)
 
             # Forward pass
-            logits = self.model(x)
-            loss = logits.loss(y).mean()
+            loss = self.model(x).loss(y).mean()
 
             # Backward pass
             self.optimizer.zero_grad()

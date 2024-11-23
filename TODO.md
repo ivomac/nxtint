@@ -16,19 +16,17 @@
   - [x] Classification with 256 classes
 
 ## TODO ⏳
-- Data Generation
+- Data Generation / Learning Strategy
   - [x] Data generation module
-  - [x] First-order recurrence sequences
-  - [ ] Nested recurrence sequences
-  - [ ] Combined/transformed sequences
+  - [x] Phase 1: First-order recurrence sequences
+  - [x] Phase 2: Second-order recurrence sequences
+  - [ ] Phase 3: Nested recurrence sequences
+  - [ ] Phase 4: Combined/transformed sequences
+- Generation Strategy
+  - [x] Cached/Incremental decoding
 - Loss Function
-  - [x] Cross-entropy
   - [x] Distance-weighted cross-entropy
   - [x] Implementation with α scaling factor
-- Loss Handling for Masked Positions
-  - [ ] Include all positions with normalization
-- Training Approach
-  - [ ] Train on all prefixes
 - Training Parameters
   - [x] Batch size 32
   - [x] Linear warmup + cosine decay
@@ -36,14 +34,8 @@
   - [x] 50-100 epochs
 - Early Stopping Criteria
   - [x] Validation loss plateau monitoring
-- Curriculum Learning Strategy
-  - [ ] Phase 1: Simple recurrence
-  - [ ] Phase 2: Nested recurrence
-  - [ ] Phase 3: Combined/transformed
-- Generation Strategy
-  - [ ] Cached/Incremental decoding
 - Generation Decoding Strategy
-  - [ ] Greedy decoding
+  - [x] Greedy decoding
 - Gradient Clipping
   - [x] Global norm clipping
 - Validation

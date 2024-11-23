@@ -52,7 +52,7 @@ class SequenceTransformer(nn.Module):
             return {}
 
         with open(config_path) as f:
-            logger.info(f"{model_id} - Config file loaded")
+            logger.info(f"{model_id} - Configuration loaded")
             return json.load(f)
 
     def __init__(self, model_id: str | None = None):
@@ -150,7 +150,7 @@ class SequenceTransformer(nn.Module):
             self.load_state_dict(torch.load(self.weights_file, weights_only=True))
             logger.info(f"{self.model_id} - Weights loaded")
         else:
-            logger.info(f"{self.model_id} - Weights not found")
+            logger.info(f"{self.model_id} - Weights randomly initialized")
         return
 
     @log_io(logger)

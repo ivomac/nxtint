@@ -2,13 +2,13 @@
 
 import torch
 
-from nxtint.data.sequences import FOSequenceGenerator
+from nxtint.data.sequences import FOSequence
 from nxtint.utils.config import Config
 
 
 def test_sequence_validity(batch_size=50):
     """Test that generated sequences are valid."""
-    generator = FOSequenceGenerator()
+    generator = FOSequence()
     x, y = generator.generate_batch(batch_size=batch_size)
 
     assert x.shape == (batch_size, Config.model.x_len)
@@ -18,7 +18,7 @@ def test_sequence_validity(batch_size=50):
 
 def test_batch_generation(batch_size=50):
     """Test that batch generation works correctly."""
-    generator = FOSequenceGenerator()
+    generator = FOSequence()
 
     # Generate multiple batches
     x1, _ = generator.generate_batch(batch_size=batch_size)

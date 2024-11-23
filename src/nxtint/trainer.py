@@ -5,7 +5,7 @@ from torch.nn.utils import clip_grad_norm_
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-from .data.sequences import FOSequenceGenerator
+from .data.sequences import FOSequence
 from .model import SequenceTransformer
 from .utils.config import Config
 from .utils.constants import INF
@@ -59,8 +59,8 @@ class Trainer:
         self.early_stopping = EarlyStopping()
 
         # Setup data generators
-        self.train_gen = FOSequenceGenerator()
-        self.val_gen = FOSequenceGenerator()
+        self.train_gen = FOSequence()
+        self.val_gen = FOSequence()
         return
 
     @log_io(logger)

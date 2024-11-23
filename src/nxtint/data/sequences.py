@@ -8,7 +8,7 @@ from nxtint.utils.logging import log_io, setup_logger
 logger = setup_logger(__name__)
 
 
-class FOSequenceGenerator:
+class FOSequence:
     """Generate first-order recurrence sequences with integer parameters.
 
     Attributes:

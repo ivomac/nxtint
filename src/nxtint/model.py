@@ -140,7 +140,7 @@ class SequenceTransformer(nn.Module):
         with self.config_file.open("w") as f:
             json.dump(config, f, indent=2)
 
-        logger.info(f"{self.model_id} - Model saved")
+        logger.info(f"{self.model_id} - Saved")
         return
 
     @log_io(logger)
@@ -148,9 +148,9 @@ class SequenceTransformer(nn.Module):
         """Load model weights from saved file."""
         if self.weights_file.is_file():
             self.load_state_dict(torch.load(self.weights_file, weights_only=True))
-            logger.info(f"{self.model_id} - Model weights loaded")
+            logger.info(f"{self.model_id} - Weights loaded")
         else:
-            logger.info(f"{self.model_id} - Model weights not found")
+            logger.info(f"{self.model_id} - Weights not found")
         return
 
     @log_io(logger)
@@ -162,7 +162,18 @@ class SequenceTransformer(nn.Module):
                 file.unlink()
             # Remove the empty directory
             self.save_dir.rmdir()
-            logger.info(f"{self.model_id} - Model deleted")
+            logger.info(f"{self.model_id} - Deleted")
+        return
+
+    def __del__(self):
+        """Delete model files if no model parameters or config are saved."""
+        if (
+            self.save_dir.exists()
+            and not self.weights_file.is_file()
+            and not self.config_file.is_file()
+        ):
+            logger.info(f"{self.model_id} - Cleanup triggered")
+            self.delete()
         return
 
     @log_io(logger)

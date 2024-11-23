@@ -19,6 +19,17 @@ class Trainer:
 
     Attributes:
         model: Model to train
+        train_logger: Logger for training progress
+        optimizer: AdamW optimizer instance
+        scheduler: Learning rate scheduler
+        early_stopping: Early stopping handler
+        train_gen: Training data generator
+        val_gen: Validation data generator
+
+    Methods:
+        init_components: Set training components
+        validate: Run validation and return mean loss
+        train: Train the model
     """
 
     def __init__(self, model: SequenceTransformer):

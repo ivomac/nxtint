@@ -16,6 +16,11 @@ class FOSequence:
         current_idx: Index of last returned sequence from buffer
         total_sequences: Total number of generated sequences
         invalid_sequences: Number of sequences with invalid values
+
+    Methods:
+        is_valid: Check if a sequence is valid
+        generate_buffer: Generate a new buffer of sequences
+        generate_batch: Generate a batch of valid sequences
     """
 
     def __init__(self):
@@ -41,7 +46,7 @@ class FOSequence:
         return (sequence >= -Config.gen.max_int).all() and (sequence < Config.gen.max_int).all()
 
     @log_io(logger)
-    def _generate_buffer(self):
+    def generate_buffer(self):
         """Generate a new buffer of sequences using first-order recurrence relations."""
         # Preallocate the sequence buffer
         self.buffer = torch.zeros(
@@ -105,7 +110,7 @@ class FOSequence:
         while valid_count < batch_size:
             # Generate new buffer if needed
             if self.current_idx >= len(self.buffer):
-                self._generate_buffer()
+                self.generate_buffer()
 
             # Get remaining sequences needed
             remaining = batch_size - valid_count

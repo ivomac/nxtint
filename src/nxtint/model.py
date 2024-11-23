@@ -14,7 +14,22 @@ logger = setup_logger(__name__)
 
 
 class SequenceTransformer(nn.Module):
-    """Transformer model for predicting the next integer in a sequence."""
+    """Transformer model for predicting the next integer in a sequence.
+
+    Attributes:
+        model_id: Unique identifier for the model instance
+        save_dir: Directory path for saving model files
+        weights_file: Path to saved model weights
+        config_file: Path to saved model configuration
+
+    Methods:
+        load_config: Load configuration from saved model
+        init_layers: Initialize model layers
+        save: Save model weights and configuration
+        load_weights: Load model weights from saved file
+        delete: Delete saved model files
+        forward: Forward pass of the model
+    """
 
     @classmethod
     @log_io(logger)

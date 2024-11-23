@@ -8,12 +8,16 @@ from .config import Config
 class ModelID:
     """Generate human-readable unique model identifiers.
 
-    Model IDs are generated as 'adjective_noun' pairs.
+    Model IDs are generated as 'adjective-noun' pairs.
 
     Attributes:
-        ADJECTIVES: List of adjectives
-        NOUNS: List of nouns
-        USED_IDS: Set of used model identifiers
+        ADJECTIVES: List of adjectives for ID generation
+        NOUNS: List of nouns for ID generation
+
+    Methods:
+        gen_id: Generate a human-readable unique model identifier
+        new: Generate and verify uniqueness of a new model ID
+        used: List currently used model identifiers
     """
 
     ADJECTIVES = [
@@ -133,7 +137,7 @@ class ModelID:
     ]
 
     @classmethod
-    def _gen_id(cls) -> str:
+    def gen_id(cls) -> str:
         """Generate a human-readable unique model identifier.
 
         Returns:
@@ -153,7 +157,7 @@ class ModelID:
         """
         used_ids = cls.used()
 
-        while (id := cls._gen_id()) in used_ids:
+        while (id := cls.gen_id()) in used_ids:
             pass
         return id
 

@@ -8,7 +8,7 @@ from nxtint.utils.ids import ModelID
 
 def test_id_generation():
     """Test that generated IDs follow the correct format."""
-    model_id = ModelID._gen_id()
+    model_id = ModelID.gen_id()
 
     # Check format
     assert isinstance(model_id, str)

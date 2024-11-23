@@ -112,7 +112,7 @@ class EarlyStoppingConfig(metaclass=BaseConfig):
     """
 
     patience: int = 10
-    min_delta: float = 0.001
+    min_delta: float = 1e-6
 
 
 class GenConfig(metaclass=BaseConfig):

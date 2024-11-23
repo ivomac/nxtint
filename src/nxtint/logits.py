@@ -1,3 +1,10 @@
+"""Handle logits output from the transformer model.
+
+This module provides the Logits class which extends torch.Tensor to add
+prediction and loss calculation functionality specifically for integer
+sequence prediction.
+"""
+
 import torch
 import torch.nn as nn
 
@@ -8,7 +15,22 @@ logger = setup_logger(__name__)
 
 
 class Logits(torch.Tensor):
+    """Extended tensor for handling model logits output.
+
+    Inherits from torch.Tensor to provide specialized functionality for
+    converting logits to predictions and calculating loss values for
+    integer sequence prediction.
+
+    Attributes:
+        All attributes inherited from torch.Tensor
+
+    Methods:
+        predict: Convert logits to integer predictions
+        loss: Calculate distance-weighted cross entropy loss
+    """
+
     def __new__(cls, *args, **kwargs):
+        """Create a new Logits instance."""
         return super().__new__(cls, *args, **kwargs)
 
     @log_io(logger)

@@ -1,19 +1,33 @@
 """Transformer model for integer sequence prediction."""
 
+import json
+import uuid
+
 import torch
 import torch.nn as nn
 
 from .logits import Logits
 from .utils.config import Config
+from .utils.logging import log_io, setup_logger
+
+logger = setup_logger(__name__)
 
 
 class SequenceTransformer(nn.Module):
     """Transformer model for predicting the next integer in a sequence."""
 
-    def __init__(self):
-        """Initialize the model."""
-        # Initialize parent class first
+    def __init__(self, model_id: str | None = None):
+        """Initialize the model.
+
+        Args:
+            model_id: Unique identifier for the model. If None, generates new ID.
+                     If provided, attempts to load existing model with this ID.
+        """
         super().__init__()
+
+        # Set or generate model ID
+        self.model_id = model_id or str(uuid.uuid4())
+        self.save_dir = Config.save.base_dir / self.model_id
 
         # Integer embedding layer
         self.int_embedding = nn.Embedding(
@@ -52,8 +66,47 @@ class SequenceTransformer(nn.Module):
             2 * Config.gen.max_int,
             dtype=Config.dtype.float,
         )
+
+        # Try to load existing model
+        if model_id is not None:
+            self.load()
         return
 
+    @log_io(logger)
+    def save(self):
+        """Save model weights and configuration."""
+        # Create save directory
+        self.save_dir.mkdir(parents=True, exist_ok=True)
+
+        # Save model weights
+        weights_path = self.save_dir / Config.save.weights_file
+        torch.save(self.state_dict(), weights_path)
+
+        # Save configuration
+        config_path = self.save_dir / Config.save.config_file
+        config = {
+            "model_id": self.model_id,
+            "model": {k: v for k, v in vars(Config.model).items() if not k.startswith("_")},
+            "gen": {k: v for k, v in vars(Config.gen).items() if not k.startswith("_")},
+        }
+        with open(config_path, "w") as f:
+            json.dump(config, f, indent=2)
+
+        logger.info(f"Saved model to {self.save_dir}")
+        return
+
+    @log_io(logger)
+    def load(self):
+        """Load model weights from saved file."""
+        weights_path = self.save_dir / Config.save.weights_file
+        if weights_path.is_file():
+            self.load_state_dict(torch.load(weights_path))
+            logger.info(f"Loaded existing model {self.model_id}")
+        else:
+            logger.warning(f"No existing model found with ID {self.model_id}")
+        return
+
+    @log_io(logger)
     def forward(self, x: torch.Tensor) -> Logits:
         """Forward pass of the model.
 

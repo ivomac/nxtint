@@ -1,8 +1,13 @@
 """Configuration classes for nxtint."""
 
+import logging
 from contextlib import contextmanager
+from pathlib import Path
 
 import torch
+
+INFO = logging.INFO
+DEBUG = logging.DEBUG
 
 if torch.cuda.is_available():
     torch.set_default_device("cuda")
@@ -144,6 +149,37 @@ class TypeConfig(metaclass=BaseConfig):
     float: torch.dtype = torch.float32
 
 
+class SaveConfig(metaclass=BaseConfig):
+    """Model saving configuration.
+
+    Attributes:
+        base_dir: Base directory for saving models
+        model_dir: Directory for specific model instance
+        weights_file: Model weights filename
+        config_file: Model config filename
+        log_file: Training log filename
+    """
+
+    base_dir: Path = Path("./cache/models")
+    weights_file: str = "weights.pt"
+    config_file: str = "config.json"
+    log_file: str = "training.log"
+
+
+class LogConfig(metaclass=BaseConfig):
+    """Logging configuration.
+
+    Attributes:
+        dir: Directory for log files
+        file: Log filename
+        level: Logging level
+    """
+
+    dir: Path = Path("./cache/logs")
+    file: str = "nxtint.log"
+    level: int = INFO
+
+
 class Config(metaclass=BaseConfig):
     """Global configuration container.
 
@@ -153,10 +189,14 @@ class Config(metaclass=BaseConfig):
         gen: Data generation configuration
         loss: Loss function configuration
         dtype: Data types configuration
+        save: Save configuration
+        log: Logging configuration
     """
 
-    model: BaseConfig = ModelConfig
-    training: BaseConfig = TrainConfig
-    gen: BaseConfig = GenConfig
-    loss: BaseConfig = LossConfig
-    dtype: BaseConfig = TypeConfig
+    model = ModelConfig
+    training = TrainConfig
+    gen = GenConfig
+    loss = LossConfig
+    dtype = TypeConfig
+    save = SaveConfig
+    log = LogConfig

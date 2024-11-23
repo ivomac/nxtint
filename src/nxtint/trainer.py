@@ -5,10 +5,13 @@ from torch.nn.utils import clip_grad_norm_
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-from nxtint.data.sequences import FOSequenceGenerator
-from nxtint.model import SequenceTransformer
-from nxtint.utils.config import EarlyStoppingConfig, TrainConfig
-from nxtint.utils.constants import INF
+from .data.sequences import FOSequenceGenerator
+from .model import SequenceTransformer
+from .utils.config import EarlyStoppingConfig, TrainConfig
+from .utils.constants import INF
+from .utils.logging import log_io, setup_logger
+
+logger = setup_logger(__name__)
 
 
 class Trainer:
@@ -49,6 +52,7 @@ class Trainer:
         self.val_gen = FOSequenceGenerator()
         return
 
+    @log_io(logger)
     def validate(self, num_batches: int = 10) -> float:
         """Run validation and return mean loss.
 
@@ -74,6 +78,7 @@ class Trainer:
         self.model.train()
         return total_loss / num_batches
 
+    @log_io(logger)
     def train(self):
         """Train the model."""
         self.model.train()
@@ -100,18 +105,18 @@ class Trainer:
             self.scheduler.step()
 
             # Log training loss
-            # if step % 100 == 0:
-            #     logger.debug(f"Step {step}, Loss: {loss.item():.4f}")
+            if step % 100 == 0:
+                logger.info(f"Step {step}, Loss: {loss.item():.3g}")
 
             # Validate and check early stopping
             if step % TrainConfig.validate_every == 0:
                 val_loss = self.validate()
-                # logger.debug(f"Step {step}, Validation Loss: {val_loss:.4f}")
+                logger.info(f"Step {step}, Validation Loss: {val_loss:.3g}")
 
                 # Check early stopping
                 best_weights = self.early_stopping(self.model, val_loss)
                 if best_weights is not None:
-                    # logger.debug("Early stopping triggered")
+                    logger.info("Early stopping triggered")
                     # Restore best weights
                     self.model.load_state_dict(best_weights)
                     break
@@ -137,6 +142,7 @@ class EarlyStopping:
         self.best_weights = None
         return
 
+    @log_io(logger)
     def __call__(self, model: torch.nn.Module, val_loss: float) -> dict[str, torch.Tensor] | None:
         """Check if training should stop and save best weights.
 

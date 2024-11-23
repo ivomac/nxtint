@@ -1,13 +1,17 @@
 import torch
 import torch.nn as nn
 
-from nxtint.utils.config import Config
+from .utils.config import Config
+from .utils.logging import log_io, setup_logger
+
+logger = setup_logger(__name__)
 
 
 class Logits(torch.Tensor):
     def __new__(cls, *args, **kwargs):
         return super().__new__(cls, *args, **kwargs)
 
+    @log_io(logger)
     def predict(self) -> torch.Tensor:
         """Get the most likely next number prediction.
 
@@ -17,6 +21,7 @@ class Logits(torch.Tensor):
         # Get logits and return argmax
         return self.argmax(dim=-1) - Config.gen.max_int
 
+    @log_io(logger)
     def loss(self, targets: torch.Tensor, alpha: float | None = None) -> torch.Tensor:
         """Calculate distance-weighted cross entropy loss.
 

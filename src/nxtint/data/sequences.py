@@ -3,7 +3,7 @@
 import torch
 
 from nxtint.utils.config import Config
-from nxtint.utils.logging import setup_logger
+from nxtint.utils.logging import log_io, setup_logger
 
 logger = setup_logger(__name__)
 
@@ -40,6 +40,7 @@ class FOSequenceGenerator:
         """
         return (sequence >= -Config.gen.max_int).all() and (sequence < Config.gen.max_int).all()
 
+    @log_io(logger)
     def _generate_buffer(self):
         """Generate a new buffer of sequences using first-order recurrence relations."""
         # Preallocate the sequence buffer
@@ -80,6 +81,7 @@ class FOSequenceGenerator:
 
         return
 
+    @log_io(logger)
     def generate_batch(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
         """Generate a batch of valid sequences.
 

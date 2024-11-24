@@ -7,13 +7,8 @@ from functools import wraps
 from pathlib import Path
 from typing import Any
 
-from .config import LogConfig
-
-INFO = logging.INFO
-DEBUG = logging.DEBUG
-
-FMT = "%(asctime)s - %(levelname)s - %(module)s: %(message)s"
-DATEFMT = "%y-%m-%d %H:%M:%S"
+from .config import Config
+from .constants import DEBUG, LOGDATEFMT, LOGFMT
 
 
 def setup_logger(
@@ -34,7 +29,7 @@ def setup_logger(
         logging.Logger: Configured logger instance
     """
     # Use default level if none provided
-    level = level if level is not None else LogConfig.level
+    level = level if level is not None else Config.log.level
 
     logger = logging.getLogger(name)
     logger.setLevel(level)
@@ -43,7 +38,7 @@ def setup_logger(
     # Only add handlers if none exist
     if not logger.handlers:
         # Create formatter
-        formatter = logging.Formatter(fmt=FMT, datefmt=DATEFMT)
+        formatter = logging.Formatter(fmt=LOGFMT, datefmt=LOGDATEFMT)
 
         # Console handler (only if propagate is False)
         if not propagate:
@@ -54,7 +49,7 @@ def setup_logger(
 
         # File handler
         if log_file is None:
-            log_file = LogConfig.dir / LogConfig.file
+            log_file = Config.log.dir / Config.log.file
 
         log_file.parent.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(log_file)

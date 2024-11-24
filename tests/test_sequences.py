@@ -1,14 +1,25 @@
 """Tests for sequence generation module."""
 
+import pytest
 import torch
 
-from nxtint.data.sequences import FOSequence
+from nxtint.data.sequences import Sequence
 from nxtint.utils.config import Config
 
+# test linear sequence generation for different parameter sets
 
-def test_sequence_validity(batch_size=50):
+
+@pytest.mark.parametrize(
+    "initial, constant, vector",
+    [
+        (5, 5, [0]),
+        # (5, 5, [2, 1]),
+        # (2, 2, [2, 1, 1, 1]),
+    ],
+)
+def test_sequence_validity(initial, constant, vector, batch_size=10):
     """Test that generated sequences are valid."""
-    generator = FOSequence()
+    generator = Sequence.linear(initial, constant, vector)
     x, y = generator.generate_batch(batch_size=batch_size)
 
     assert x.shape == (batch_size, Config.model.x_len)
@@ -18,7 +29,7 @@ def test_sequence_validity(batch_size=50):
 
 def test_batch_generation(batch_size=50):
     """Test that batch generation works correctly."""
-    generator = FOSequence()
+    generator = Sequence.linear(5, 5, [2, 1])
 
     # Generate multiple batches
     x1, _ = generator.generate_batch(batch_size=batch_size)

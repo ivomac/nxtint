@@ -43,3 +43,11 @@ def test_early_stopping():
         # Test stopping after patience exceeded
         weights = trainer.early_stopping(model, 1.5)
         assert weights is not None
+
+def test_early_stop_trigger():
+    """Test early stopping trigger."""
+    with Config.early.override(patience=2):
+        model = SequenceTransformer()
+        trainer = Trainer(model)
+        assert not trainer.early_stop_trigger(1.0)
+        assert not

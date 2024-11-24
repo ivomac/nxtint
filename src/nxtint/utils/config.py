@@ -1,13 +1,11 @@
 """Configuration classes for nxtint."""
 
-import logging
 from contextlib import contextmanager
 from pathlib import Path
 
 import torch
 
-INFO = logging.INFO
-DEBUG = logging.DEBUG
+from .constants import DEBUG
 
 if torch.cuda.is_available():
     torch.set_default_device("cuda")
@@ -89,6 +87,8 @@ class TrainConfig(metaclass=BaseConfig):
         weight_decay: Weight decay factor
         warmup_steps: Number of warmup steps
         validate_every: Steps between validation
+        val_batches: Number of validation batches
+        eta_min: Minimum learning rate
     """
 
     batch_size: int = 32
@@ -100,6 +100,7 @@ class TrainConfig(metaclass=BaseConfig):
     eps: float = 1e-8
     warmup_steps: int = 5000
     validate_every: int = 1000
+    val_batches: int = 10
     eta_min: float = 1e-6
 
 
@@ -173,11 +174,13 @@ class LogConfig(metaclass=BaseConfig):
         dir: Directory for log files
         file: Log filename
         level: Logging level
+        train_steps: Number of training steps between log messages
     """
 
     dir: Path = Path("./cache")
     file: str = "nxtint.log"
-    level: int = INFO
+    level: int = DEBUG
+    train_steps: int = 100
 
 
 class Config(metaclass=BaseConfig):

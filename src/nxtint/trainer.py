@@ -5,7 +5,7 @@ from torch.nn.utils import clip_grad_norm_
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-from .data.sequences import FOSequence
+from .data.generator import Generator
 from .model import SequenceTransformer
 from .utils.config import Config
 from .utils.constants import INF
@@ -23,8 +23,7 @@ class Trainer:
         optimizer: AdamW optimizer instance
         scheduler: Learning rate scheduler
         early_stopping: Early stopping handler
-        train_gen: Training data generator
-        val_gen: Validation data generator
+        generator: Data generator
 
     Methods:
         init_components: Set training components
@@ -32,26 +31,17 @@ class Trainer:
         train: Train the model
     """
 
-    def __init__(self, model: SequenceTransformer):
+    def __init__(self, model: SequenceTransformer, generator: Generator):
         """Initialize trainer.
 
         Args:
             model: Model to train
+            generator: Data generator
         """
         self.model = model
-        # Setup training-specific logger
-        train_log = model.save_dir / Config.save.log_file
-        self.train_logger = setup_logger(
-            f"{__name__}.{model.model_id[:8]}",
-            log_file=train_log,
-            propagate=False,
-        )
-        self.init_components()
-        return
+        # Setup data generators
+        self.generator = generator
 
-    def init_components(self):
-        """Set training components."""
-        # Setup training components
         self.optimizer = AdamW(
             self.model.parameters(),
             lr=Config.train.lr,
@@ -69,17 +59,18 @@ class Trainer:
 
         self.early_stopping = EarlyStopping()
 
-        # Setup data generators
-        self.train_gen = FOSequence()
-        self.val_gen = FOSequence()
+        # Setup training-specific logger
+        train_log = model.save_dir / Config.save.log_file
+        self.train_logger = setup_logger(
+            f"{__name__}.{model.model_id[:8]}",
+            log_file=train_log,
+            propagate=False,
+        )
         return
 
     @log_io(logger)
-    def validate(self, num_batches: int = 10) -> tuple[float, float]:
+    def validate(self) -> tuple[float, float]:
         """Run validation and return mean loss and accuracy.
-
-        Args:
-            num_batches: Number of validation batches
 
         Returns:
             float: Mean validation loss
@@ -90,17 +81,17 @@ class Trainer:
         accuracy = 0.0
 
         with torch.no_grad():
-            for _ in range(num_batches):
+            for _ in range(Config.train.val_batches):
                 # Get batch of sequences
-                x, y = self.val_gen.generate_batch(Config.train.batch_size)
+                x, y = self.generator()
 
                 # Get predictions, loss and accuracy
                 logits = self.model(x)
                 total_loss += logits.loss(y).mean().item()
                 accuracy += logits.accuracy(y)
 
-        mean_loss = total_loss / num_batches
-        mean_accuracy = accuracy / num_batches
+        mean_loss = total_loss / Config.train.val_batches
+        mean_accuracy = accuracy / Config.train.val_batches
 
         self.model.train()
         return mean_loss, mean_accuracy
@@ -114,7 +105,7 @@ class Trainer:
 
         while step < Config.train.max_steps:
             # Get batch of sequences
-            x, y = self.train_gen.generate_batch(Config.train.batch_size)
+            x, y = self.generator()
 
             # Forward pass
             loss = self.model(x).loss(y).mean()
@@ -131,7 +122,7 @@ class Trainer:
             self.scheduler.step()
 
             # Log training loss
-            log_training_step = step % 100 == 0
+            log_training_step = step % Config.log.train_steps == 0
             validation_step = step % Config.train.validate_every == 0
             if log_training_step or validation_step:
                 self.train_logger.info(f"Step {step}")

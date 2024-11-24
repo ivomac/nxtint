@@ -82,12 +82,12 @@ def test_config_init_dirs():
 
     # Override a value
     with Config.override(
-        log={"dir": Path(log_dir.name)},
-        save={"dir": Path(save_dir.name)},
+        log={"dir": log_dir.name},
+        save={"dir": save_dir.name},
     ):
         Config.init_dirs()
-        assert Config.save.dir.exists()
-        assert Config.log.dir.exists()
+        assert Path(Config.save.dir).exists()
+        assert Path(Config.log.dir).exists()
 
     # Check that the original value is restored
     assert Config.save.dir == original_value

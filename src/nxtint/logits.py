@@ -23,7 +23,7 @@ class Logits:
 
     Methods:
         predict: Convert logits to integer predictions
-        accuracy: Calculate percentage of correct predictions
+        inaccuracy: Calculate percentage of correct predictions
         loss: Calculate distance-weighted cross entropy loss
     """
 
@@ -47,18 +47,18 @@ class Logits:
         return self.tensor.argmax(dim=-1) - Config.gen.max_int
 
     @log_io(logger)
-    def accuracy(self, targets: torch.Tensor) -> float:
-        """Calculate percentage of correct predictions.
+    def inaccuracy(self, targets: torch.Tensor) -> float:
+        """Calculate fraction of incorrect predictions.
 
         Args:
             targets: Target integers of shape (batch_size,)
 
         Returns:
-            float: Percentage of correct predictions (0-100)
+            float: fraction of incorrect predictions
         """
         predictions = self.predict()
         correct = (predictions == targets).sum().item()
-        return 100 * correct / targets.size(0)
+        return 1 - correct / targets.size(0)
 
     @log_io(logger)
     def loss(self, targets: torch.Tensor, alpha: float | None = None) -> torch.Tensor:

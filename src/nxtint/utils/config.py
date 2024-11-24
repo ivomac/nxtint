@@ -7,9 +7,6 @@ from pathlib import Path
 
 import torch
 
-if torch.cuda.is_available():
-    torch.set_default_device("cuda")
-
 
 class BaseConfig(type):
     """Metaclass for configuration classes.
@@ -49,7 +46,7 @@ class BaseConfig(type):
                 setattr(cls, k, v)
             cls._block_assign = True
 
-    def to_dict(cls):
+    def to_dict(cls) -> dict:
         """Return class attributes as a dictionary."""
         return {k: v for k, v in vars(cls).items() if not k.startswith("_")}
 
@@ -96,15 +93,15 @@ class TrainConfig(metaclass=BaseConfig):
     """
 
     batch_size: int = 32
-    max_steps: int = 50000
+    max_steps: int = 10000
     clip_norm: float = 1.0
     lr: float = 1e-3
     weight_decay: float = 0.01
     betas: tuple[float, float] = (0.9, 0.999)
     eps: float = 1e-8
-    warmup_steps: int = 5000
-    validate_every: int = 1000
-    val_batches: int = 10
+    warmup_steps: int = 1000
+    validate_every: int = 200
+    val_batches: int = 20
     eta_min: float = 1e-6
 
 
@@ -114,16 +111,16 @@ class EarlyStoppingConfig(metaclass=BaseConfig):
     Attributes:
         patience: Number of steps without improvement before stopping
         min_loss_delta: Minimum improvement to qualify as an improvement
-        min_accuracy_delta: Minimum accuracy improvement to qualify as an improvement
+        threshold_inaccuracy: Threshold inaccuracy for early stopping
         use_loss: Whether to use loss for early stopping
-        use_accuracy: Whether to use accuracy for early stopping
+        use_inaccuracy: Whether to use accuracy for early stopping
     """
 
     patience: int = 5
-    min_loss_delta: float = 1e-3
-    min_accuracy_delta: float = 1e-3
+    min_loss_delta: float = 1e-6
+    threshold_inaccuracy: float = 1e-2
     use_loss: bool = True
-    use_accuracy: bool = True
+    use_inaccuracy: bool = True
 
 
 class GenConfig(metaclass=BaseConfig):
@@ -135,7 +132,7 @@ class GenConfig(metaclass=BaseConfig):
     """
 
     max_int: int = 512
-    buffer_size: int = 1024
+    buffer_size: int = 2048
 
 
 class LossConfig(metaclass=BaseConfig):
@@ -146,18 +143,6 @@ class LossConfig(metaclass=BaseConfig):
     """
 
     alpha: float = 0.1
-
-
-class TypeConfig(metaclass=BaseConfig):
-    """Data types configuration.
-
-    Attributes:
-        int_type: Integer type
-        float_type: Float type
-    """
-
-    int: torch.dtype = torch.int32
-    float: torch.dtype = torch.float32
 
 
 class SaveConfig(metaclass=BaseConfig):
@@ -171,16 +156,17 @@ class SaveConfig(metaclass=BaseConfig):
         log_file: Training log filename
     """
 
-    dir: Path = Path("./cache/models")
+    dir: str = "./cache/models"
     weights_file: str = "weights.pt"
     config_file: str = "config.json"
     log_file: str = "training.log"
 
 
-class C:
+class C(metaclass=BaseConfig):
     """Global constants.
 
     Attributes:
+        DEVICE: Default device
         NAN: NaN tensor
         INF: Infinity tensor
         INFO: Logging level for informational messages
@@ -191,9 +177,13 @@ class C:
         NOUNS: List of nouns for naming
     """
 
-    NAN = torch.tensor(float("nan"), dtype=torch.float32)
+    DEVICE: "str" = "cuda" if torch.cuda.is_available() else "cpu"
+    INT: torch.dtype = torch.int32
+    FLOAT: torch.dtype = torch.float32
 
-    INF = torch.tensor(float("inf"))
+    NAN = torch.tensor(float("nan"), dtype=FLOAT)
+
+    INF = torch.tensor(float("inf"), dtype=FLOAT)
 
     INFO = logging.INFO
     DEBUG = logging.DEBUG
@@ -328,10 +318,10 @@ class LogConfig(metaclass=BaseConfig):
         train_steps: Number of training steps between log messages
     """
 
-    dir: Path = Path("./cache")
+    dir: str = "./cache"
     file: str = "nxtint.log"
     level: int = C.DEBUG
-    train_steps: int = 100
+    train_steps: int = TrainConfig.validate_every
 
 
 class Config(metaclass=BaseConfig):
@@ -343,17 +333,16 @@ class Config(metaclass=BaseConfig):
         early: Early stopping configuration
         gen: Data generation configuration
         loss: Loss function configuration
-        dtype: Data types configuration
         save: Save configuration
         log: Logging configuration
     """
 
+    _objects = ["model", "train", "early", "gen", "loss"]
     model = ModelConfig
     train = TrainConfig
     early = EarlyStoppingConfig
     gen = GenConfig
     loss = LossConfig
-    dtype = TypeConfig
     save = SaveConfig
     log = LogConfig
     C = C
@@ -392,14 +381,14 @@ class Config(metaclass=BaseConfig):
     @classmethod
     def init_dirs(cls):
         """Initialize directories for saving models and logs."""
-        cls.log.dir.mkdir(parents=True, exist_ok=True)
-        cls.save.dir.mkdir(parents=True, exist_ok=True)
+        Path(cls.log.dir).mkdir(parents=True, exist_ok=True)
+        Path(cls.save.dir).mkdir(parents=True, exist_ok=True)
         return
 
     @classmethod
     def to_dict(cls):
         """Return the configuration as a dictionary."""
-        return {k: v.to_dict() for k, v in vars(cls).items() if not k.startswith("_")}
+        return {k: getattr(cls, k).to_dict() for k in cls._objects}
 
     @classmethod
     def to_json(cls, filename: str | Path):
@@ -411,3 +400,7 @@ class Config(metaclass=BaseConfig):
         with open(filename, "w") as f:
             json.dump(cls.to_dict(), f, indent=2)
         return
+
+
+if torch.cuda.is_available():
+    torch.set_default_device(Config.C.DEVICE)

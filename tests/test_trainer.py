@@ -26,11 +26,11 @@ def test_validation():
     model = SequenceTransformer()
     trainer = Trainer(model, sequence)
 
-    loss, accuracy = trainer.validate()
+    loss, inaccuracy = trainer.validate()
     assert isinstance(loss, float)
     assert loss > 0
-    assert isinstance(accuracy, float)
-    assert accuracy >= 0
+    assert isinstance(inaccuracy, float)
+    assert inaccuracy >= 0
 
 
 def test_early_stopping():
@@ -40,13 +40,13 @@ def test_early_stopping():
         early = EarlyStopping()
 
         # Test improvement case
-        weights = early(model, 1.0)
+        weights = early(model, 1.0, 0.5)
         assert weights is None
 
         # Test no improvement but not stopping
-        weights = early(model, 1.5)
+        weights = early(model, 1.5, 0.5)
         assert weights is None
 
         # Test stopping after patience exceeded
-        weights = early(model, 1.5)
+        weights = early(model, 1.5, 0.5)
         assert weights is not None

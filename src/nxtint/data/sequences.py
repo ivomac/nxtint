@@ -51,14 +51,14 @@ class Sequence:
         Returns:
             Callable: Function to generate a buffer of sequences
         """
-        t_vector = torch.tensor(vector, dtype=Config.dtype.int)
+        t_vector = torch.tensor(vector, dtype=Config.C.INT)
 
         @log_io(logger)
         def linmodshift() -> torch.Tensor:
             """Generate a new buffer of sequences using linear/mod/shift recurrence relations."""
             # Preallocate the sequence buffer
             buffer = torch.zeros(
-                (Config.gen.buffer_size, Config.model.x_len + 1), dtype=Config.dtype.int
+                (Config.gen.buffer_size, Config.model.x_len + 1), dtype=Config.C.INT
             )
 
             # Fill first column with initial values
@@ -77,8 +77,8 @@ class Sequence:
                         const + torch.sum(vec[:, :lim] * buffer[:, i - lim : i], dim=1)
                     ) % mod
 
-            if shift is not None:
-                buffer += gen_normal(shift)
+            if shift:
+                buffer += gen_normal(shift).view(-1, 1)
 
             return buffer
 
@@ -108,16 +108,16 @@ class Sequence:
         Returns:
             Callable: Function to generate a buffer of sequences
         """
-        t_initial = torch.tensor(initial, dtype=Config.dtype.int)
-        t_constant = torch.tensor(constant, dtype=Config.dtype.int)
-        t_matrix = torch.tensor(matrix, dtype=Config.dtype.int)
+        t_initial = torch.tensor(initial, dtype=Config.C.INT)
+        t_constant = torch.tensor(constant, dtype=Config.C.INT)
+        t_matrix = torch.tensor(matrix, dtype=Config.C.INT)
 
         @log_io(logger)
         def coupshift() -> torch.Tensor:
             """Generate a new buffer of sequences using coupled recurrence relations."""
             # Preallocate the sequence buffers
             buffer = torch.zeros(
-                (Config.gen.buffer_size, Config.model.x_len + 1, 2), dtype=Config.dtype.int
+                (Config.gen.buffer_size, Config.model.x_len + 1, 2), dtype=Config.C.INT
             )
 
             buffer[:, 0, :] = gen_vector(t_initial)
@@ -131,8 +131,8 @@ class Sequence:
                 for j in range(2):
                     buffer[:, i, j] = const[:, j] + (mat[:, j] * buffer[:, i - 1, :]).sum(dim=-1)
 
-            if shift is not None:
-                buffer += gen_normal(shift)
+            if shift:
+                buffer += gen_normal(shift).view(-1, 1, 1)
             return buffer[:, :, 0]
 
         return cls(coupshift)
@@ -144,14 +144,8 @@ class Sequence:
         # Initialize empty buffer
         self.buffer = torch.empty(0)
 
-        self.x = torch.empty(
-            (Config.train.batch_size, Config.model.x_len),
-            dtype=Config.dtype.int,
-        )
-        self.y = torch.empty(
-            (Config.train.batch_size,),
-            dtype=torch.int,
-        )
+        self.x = torch.empty((Config.train.batch_size, Config.model.x_len), dtype=Config.C.INT)
+        self.y = torch.empty((Config.train.batch_size,), dtype=Config.C.INT)
 
         # Initialize counters
         self.current_idx = 0
@@ -231,22 +225,26 @@ class Sequence:
 
 def gen_normal(std):
     """Generate a random integer from a normal distribution."""
-    return torch.normal(0, std, (Config.gen.buffer_size,), dtype=Config.dtype.int)
+    return (
+        torch.normal(0, std, (Config.gen.buffer_size,), dtype=Config.C.FLOAT)
+        .round()
+        .to(dtype=Config.C.INT, device=Config.C.DEVICE)
+    )
 
 
 def gen_scalar(val):
     """Generate a random integer parameter scalar."""
-    return torch.randint(-val, val + 1, (Config.gen.buffer_size,), dtype=Config.dtype.int)
+    return torch.randint(-val, val + 1, (Config.gen.buffer_size,), dtype=Config.C.INT)
 
 
 def gen_positive(min, max):
     """Generate a random integer parameter scalar."""
-    return torch.randint(min, max + 1, (Config.gen.buffer_size,), dtype=Config.dtype.int)
+    return torch.randint(min, max + 1, (Config.gen.buffer_size,), dtype=Config.C.INT)
 
 
 def gen_vector(val_vector: torch.Tensor):
     """Generate a random integer parameter vector."""
-    vector = torch.zeros((Config.gen.buffer_size, *val_vector.shape), dtype=Config.dtype.int)
+    vector = torch.zeros((Config.gen.buffer_size, *val_vector.shape), dtype=Config.C.INT)
     for i, val in enumerate(val_vector):
         vector[:, i] = gen_scalar(val.item())
     return vector

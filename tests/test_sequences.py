@@ -8,16 +8,16 @@ from nxtint.utils.config import Config
 
 
 @pytest.mark.parametrize(
-    "initial, constant, vector",
+    "initial, constant, vector, shift",
     [
-        (5, 5, [0]),
-        (5, 5, [2, 1]),
-        (2, 2, [2, 1, 1, 1]),
+        (5, 5, [0], 0),
+        (5, 5, [2, 1], 0),
+        (2, 2, [2, 1, 1, 1], 10),
     ],
 )
-def test_sequence_validity(initial, constant, vector):
+def test_sequence_validity(initial, constant, vector, shift):
     """Test that generated sequences are valid."""
-    sequence = Sequence.linear(initial, constant, vector)
+    sequence = Sequence.linear(initial, constant, vector, shift=shift)
     x, y = next(sequence)
 
     assert x.shape == (Config.train.batch_size, Config.model.x_len)
@@ -50,7 +50,7 @@ def test_sequence_iteration():
 )
 def test_sequence_coupled(initial, constant, matrix, shift):
     """Test that coupled sequences are generated correctly."""
-    sequence = Sequence.coupled(initial, constant, matrix)
+    sequence = Sequence.coupled(initial, constant, matrix, shift=shift)
     x, y = next(sequence)
 
     assert x.shape == (Config.train.batch_size, Config.model.x_len)

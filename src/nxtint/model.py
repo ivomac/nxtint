@@ -1,6 +1,7 @@
 """Transformer model for integer sequence prediction."""
 
 import json
+from pathlib import Path
 
 import torch
 import torch.nn as nn
@@ -46,7 +47,7 @@ class SequenceTransformer(nn.Module):
             logger.info("No model ID provided")
             return {}
 
-        config_path = Config.save.dir / model_id / Config.save.config_file
+        config_path = Path(Config.save.dir) / model_id / Config.save.config_file
         if not config_path.is_file():
             logger.info(f"{model_id} - Config file not found")
             return {}
@@ -66,7 +67,7 @@ class SequenceTransformer(nn.Module):
 
         # Set or generate model ID
         self.model_id = ModelID.new() if model_id is None else model_id
-        self.save_dir = Config.save.dir / self.model_id
+        self.save_dir = Path(Config.save.dir) / self.model_id
         self.weights_file = self.save_dir / Config.save.weights_file
         self.config_file = self.save_dir / Config.save.config_file
 
@@ -81,21 +82,16 @@ class SequenceTransformer(nn.Module):
         # Integer embedding layer
         self.int_shift = Config.gen.max_int
         self.int_embedding = nn.Embedding(
-            2 * Config.gen.max_int,
-            Config.model.d_model,
-            dtype=Config.dtype.float,
+            2 * Config.gen.max_int, Config.model.d_model, dtype=Config.C.FLOAT
         )
 
         # Positional embedding layer
-        self.positions = torch.arange(
-            Config.model.x_len,
-            dtype=Config.dtype.int,
-        )
+        self.positions = torch.arange(Config.model.x_len, dtype=Config.C.INT)
 
         self.pos_embedding = nn.Embedding(
             Config.model.x_len,
             Config.model.d_model,
-            dtype=Config.dtype.float,
+            dtype=Config.C.FLOAT,
         )
 
         # Transformer layers
@@ -107,7 +103,7 @@ class SequenceTransformer(nn.Module):
             activation=Config.model.activation,
             batch_first=Config.model.batch_first,
             norm_first=Config.model.norm_first,
-            dtype=Config.dtype.float,
+            dtype=Config.C.FLOAT,
         )
 
         self.transformer = nn.TransformerEncoder(
@@ -119,7 +115,7 @@ class SequenceTransformer(nn.Module):
         self.output = nn.Linear(
             Config.model.d_model,
             2 * Config.gen.max_int,
-            dtype=Config.dtype.float,
+            dtype=Config.C.FLOAT,
         )
         return
 

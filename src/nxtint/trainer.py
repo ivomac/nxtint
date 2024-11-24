@@ -111,7 +111,7 @@ class Trainer:
         """
         self.model.eval()
         total_loss = 0.0
-        accuracy = 0.0
+        inaccuracy = 0.0
 
         with torch.no_grad():
             for _ in range(Config.train.val_batches):
@@ -121,13 +121,13 @@ class Trainer:
                 # Get predictions, loss and accuracy
                 logits = self.model(x)
                 total_loss += logits.loss(y).mean().item()
-                accuracy += logits.accuracy(y)
+                inaccuracy += logits.inaccuracy(y)
 
         mean_loss = total_loss / Config.train.val_batches
-        mean_accuracy = accuracy / Config.train.val_batches
+        mean_inaccuracy = inaccuracy / Config.train.val_batches
 
         self.model.train()
-        return mean_loss, mean_accuracy
+        return mean_loss, mean_inaccuracy
 
     @log_io(logger)
     def train(self):
@@ -162,12 +162,12 @@ class Trainer:
                 if log_training_step:
                     self.train_logger.info(f"Training Loss:       {loss.item():.3g}")
                 if validation_step:
-                    loss, accuracy = self.validate()
+                    loss, inaccuracy = self.validate()
                     self.train_logger.info(f"Validation Loss:     {loss:.3g}")
-                    self.train_logger.info(f"Validation Accuracy: {accuracy:.1f}%")
+                    self.train_logger.info(f"Validation Inccuracy: {inaccuracy*100:.1f}%")
 
                     # Check early stopping
-                    best_weights = self.early_stopping(self.model, loss, accuracy)
+                    best_weights = self.early_stopping(self.model, loss, inaccuracy)
                     if best_weights is not None:
                         self.train_logger.info("Early stopping triggered")
                         # Restore best weights
@@ -191,32 +191,30 @@ class EarlyStopping:
     def __init__(self):
         """Initialize early stopping handler."""
         self.best_loss = C.INF
-        self.best_accuracy = 0.0
         self.counter = 0
         self.best_weights = None
         return
 
     @log_io(logger)
     def __call__(
-        self, model: torch.nn.Module, val_loss: float, val_accuracy: float
+        self, model: torch.nn.Module, loss: float, inaccuracy: float
     ) -> dict[str, torch.Tensor] | None:
         """Check if training should stop and save best weights.
 
         Args:
             model: Current model
-            val_loss: Current validation loss
-            val_accuracy: Current validation accuracy
+            loss: Current validation loss
+            inaccuracy: Current validation inaccuracy
 
         Returns:
             dict: Best model state dict if stopping, None otherwise
         """
         ce = Config.early
-        if (not ce.use_loss or (val_loss < self.best_loss - ce.min_loss_delta)) and (
-            not ce.use_accuracy or (val_accuracy > self.best_accuracy + ce.min_accuracy_delta)
+        if (not ce.use_loss or (loss < self.best_loss - ce.min_loss_delta)) and (
+            not ce.use_inaccuracy or (inaccuracy < ce.threshold_inaccuracy)
         ):
             # New best found
-            self.best_loss = val_loss
-            self.best_accuracy = val_accuracy
+            self.best_loss = loss
             self.counter = 0
             self.best_weights = {k: v.cpu().clone() for k, v in model.state_dict().items()}
             return None

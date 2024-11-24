@@ -1,5 +1,7 @@
 """Generate human-readable unique model identifiers."""
 
+from pathlib import Path
+
 import torch
 
 from .config import C, Config
@@ -55,4 +57,4 @@ class ModelID:
         Returns:
             set: Set of used model identifiers
         """
-        return set(dir.name for dir in Config.save.dir.iterdir() if dir.is_dir())
+        return set(dir.name for dir in Path(Config.save.dir).iterdir() if dir.is_dir())

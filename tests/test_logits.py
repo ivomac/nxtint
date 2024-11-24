@@ -71,12 +71,12 @@ def test_accuracy():
 
     # Test perfect accuracy
     perfect_targets = torch.tensor([1, 2, 3])
-    assert logits.accuracy(perfect_targets) == 100.0
+    assert logits.inaccuracy(perfect_targets) == 0.0
 
     # Test partial accuracy
     partial_targets = torch.tensor([1, 0, 3])  # Second prediction wrong
-    assert 66.66 <= logits.accuracy(partial_targets) <= 66.67
+    assert 0.333 <= logits.inaccuracy(partial_targets) <= 0.334
 
     # Test zero accuracy
     wrong_targets = torch.tensor([-1, 0, 2])  # All predictions wrong
-    assert logits.accuracy(wrong_targets) == 0.0
+    assert logits.inaccuracy(wrong_targets) == 1.0

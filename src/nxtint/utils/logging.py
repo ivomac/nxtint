@@ -48,7 +48,7 @@ def setup_logger(
 
         # File handler
         if log_file is None:
-            log_file = Config.log.dir / Config.log.file
+            log_file = Path(Config.log.dir) / Config.log.file
 
         log_file.parent.mkdir(parents=True, exist_ok=True)
         file_handler = logging.FileHandler(log_file)

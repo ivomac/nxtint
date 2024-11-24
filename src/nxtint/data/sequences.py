@@ -126,7 +126,10 @@ class Sequence:
 
             # Generate each sequence using the recurrence relation
             for i in range(1, Config.model.x_len + 1):
-                buffer[:, i, :] = const + mat @ buffer[:, i - 1, :].T
+                # TODO(ivo): integer matrix multiplication on GPU is not supported:
+                # https://github.com/pytorch/pytorch/issues/44428
+                for j in range(2):
+                    buffer[:, i, j] = const[:, j] + (mat[:, j] * buffer[:, i - 1, :]).sum(dim=-1)
 
             if shift is not None:
                 buffer += gen_normal(shift)

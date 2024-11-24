@@ -167,7 +167,7 @@ class Trainer:
                     self.train_logger.info(f"Validation Accuracy: {accuracy:.1f}%")
 
                     # Check early stopping
-                    best_weights = self.early_stopping(self.model, loss)
+                    best_weights = self.early_stopping(self.model, loss, accuracy)
                     if best_weights is not None:
                         self.train_logger.info("Early stopping triggered")
                         # Restore best weights
@@ -191,31 +191,39 @@ class EarlyStopping:
     def __init__(self):
         """Initialize early stopping handler."""
         self.best_loss = C.INF
+        self.best_accuracy = 0.0
         self.counter = 0
         self.best_weights = None
         return
 
     @log_io(logger)
-    def __call__(self, model: torch.nn.Module, val_loss: float) -> dict[str, torch.Tensor] | None:
+    def __call__(
+        self, model: torch.nn.Module, val_loss: float, val_accuracy: float
+    ) -> dict[str, torch.Tensor] | None:
         """Check if training should stop and save best weights.
 
         Args:
             model: Current model
             val_loss: Current validation loss
+            val_accuracy: Current validation accuracy
 
         Returns:
             dict: Best model state dict if stopping, None otherwise
         """
-        if val_loss < self.best_loss - Config.early.min_delta:
-            # New best loss found
+        ce = Config.early
+        if (not ce.use_loss or (val_loss < self.best_loss - ce.min_loss_delta)) and (
+            not ce.use_accuracy or (val_accuracy > self.best_accuracy + ce.min_accuracy_delta)
+        ):
+            # New best found
             self.best_loss = val_loss
+            self.best_accuracy = val_accuracy
             self.counter = 0
             self.best_weights = {k: v.cpu().clone() for k, v in model.state_dict().items()}
             return None
 
         # No improvement
         self.counter += 1
-        if self.counter >= Config.early.patience:
+        if self.counter >= ce.patience:
             # Return best weights when stopping
             return self.best_weights
         return None

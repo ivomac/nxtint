@@ -132,13 +132,8 @@ class SequenceTransformer(nn.Module):
         # Save model weights
         torch.save(self.state_dict(), self.weights_file)
 
-        # Save configuration
-        config = {
-            "model": {k: v for k, v in vars(Config.model).items() if not k.startswith("_")},
-            "gen": {k: v for k, v in vars(Config.gen).items() if not k.startswith("_")},
-        }
-        with self.config_file.open("w") as f:
-            json.dump(config, f, indent=2)
+        # Save model configuration
+        Config.to_json(self.config_file)
 
         logger.info(f"{self.model_id} - Saved")
         return

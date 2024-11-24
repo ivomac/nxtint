@@ -1,5 +1,6 @@
 """Configuration classes for nxtint."""
 
+import json
 import logging
 from contextlib import contextmanager
 from pathlib import Path
@@ -47,6 +48,10 @@ class BaseConfig(type):
             for k, v in original.items():
                 setattr(cls, k, v)
             cls._block_assign = True
+
+    def to_dict(cls):
+        """Return class attributes as a dictionary."""
+        return {k: v for k, v in vars(cls).items() if not k.startswith("_")}
 
 
 class ModelConfig(metaclass=BaseConfig):
@@ -108,11 +113,17 @@ class EarlyStoppingConfig(metaclass=BaseConfig):
 
     Attributes:
         patience: Number of steps without improvement before stopping
-        min_delta: Minimum improvement to qualify as an improvement
+        min_loss_delta: Minimum improvement to qualify as an improvement
+        min_accuracy_delta: Minimum accuracy improvement to qualify as an improvement
+        use_loss: Whether to use loss for early stopping
+        use_accuracy: Whether to use accuracy for early stopping
     """
 
-    patience: int = 10
-    min_delta: float = 1e-6
+    patience: int = 5
+    min_loss_delta: float = 1e-3
+    min_accuracy_delta: float = 1e-3
+    use_loss: bool = True
+    use_accuracy: bool = True
 
 
 class GenConfig(metaclass=BaseConfig):
@@ -383,4 +394,20 @@ class Config(metaclass=BaseConfig):
         """Initialize directories for saving models and logs."""
         cls.log.dir.mkdir(parents=True, exist_ok=True)
         cls.save.dir.mkdir(parents=True, exist_ok=True)
+        return
+
+    @classmethod
+    def to_dict(cls):
+        """Return the configuration as a dictionary."""
+        return {k: v.to_dict() for k, v in vars(cls).items() if not k.startswith("_")}
+
+    @classmethod
+    def to_json(cls, filename: str | Path):
+        """Save the configuration to a JSON file.
+
+        Args:
+            filename: Output filename
+        """
+        with open(filename, "w") as f:
+            json.dump(cls.to_dict(), f, indent=2)
         return

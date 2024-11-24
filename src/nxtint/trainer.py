@@ -1,14 +1,16 @@
-"""Training loop for sequence prediction model."""
+"""Training loop and phased training for sequence prediction model."""
+
+from collections.abc import Iterator
+from itertools import cycle
 
 import torch
 from torch.nn.utils import clip_grad_norm_
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import CosineAnnealingLR
 
-from .data.generator import Generator
+from .data.sequences import Sequence
 from .model import SequenceTransformer
-from .utils.config import Config
-from .utils.constants import INF
+from .utils.config import C, Config
 from .utils.logging import log_io, setup_logger
 
 logger = setup_logger(__name__)
@@ -31,16 +33,47 @@ class Trainer:
         train: Train the model
     """
 
-    def __init__(self, model: SequenceTransformer, generator: Generator):
+    @classmethod
+    @log_io(logger)
+    def train_from_phases(cls, model: SequenceTransformer, phases: list[list[Sequence]]):
+        """Train the model through multiple phases of sequences.
+
+        Each phase consists of a different set of sequence types.
+
+        Args:
+            model: Model to train
+            phases: List of lists of sequences for each training phase
+        """
+        for i, sequences in enumerate(phases):
+            logger.info(f"Starting phase {i+1}/{len(phases)}")
+
+            # Create cycling iterator over sequences and trainer for this phase
+            trainer = cls(model, sequences)
+
+            # Train on this phase
+            trainer.train()
+
+            logger.info(f"Completed phase {i+1}")
+        return
+
+    def __init__(
+        self,
+        model: SequenceTransformer,
+        sequence_gen: Iterator[Sequence] | list[Sequence] | Sequence,
+    ):
         """Initialize trainer.
 
         Args:
             model: Model to train
-            generator: Data generator
+            sequence_gen: Iterator over sequences
         """
         self.model = model
-        # Setup data generators
-        self.generator = generator
+        # Setup sequence iterator
+        if isinstance(sequence_gen, Sequence):
+            sequence_gen = cycle([sequence_gen])
+        elif isinstance(sequence_gen, list):
+            sequence_gen = cycle(sequence_gen)
+        self.sequence_gen = sequence_gen
 
         self.optimizer = AdamW(
             self.model.parameters(),
@@ -83,7 +116,7 @@ class Trainer:
         with torch.no_grad():
             for _ in range(Config.train.val_batches):
                 # Get batch of sequences
-                x, y = self.generator()
+                x, y = next(next(self.sequence_gen))
 
                 # Get predictions, loss and accuracy
                 logits = self.model(x)
@@ -105,7 +138,7 @@ class Trainer:
 
         while step < Config.train.max_steps:
             # Get batch of sequences
-            x, y = self.generator()
+            x, y = next(next(self.sequence_gen))
 
             # Forward pass
             loss = self.model(x).loss(y).mean()
@@ -157,7 +190,7 @@ class EarlyStopping:
 
     def __init__(self):
         """Initialize early stopping handler."""
-        self.best_loss = INF
+        self.best_loss = C.INF
         self.counter = 0
         self.best_weights = None
         return

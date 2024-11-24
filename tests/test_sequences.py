@@ -6,37 +6,36 @@ import torch
 from nxtint.data.sequences import Sequence
 from nxtint.utils.config import Config
 
-# test linear sequence generation for different parameter sets
-
 
 @pytest.mark.parametrize(
     "initial, constant, vector",
     [
         (5, 5, [0]),
-        # (5, 5, [2, 1]),
-        # (2, 2, [2, 1, 1, 1]),
+        (5, 5, [2, 1]),
+        (2, 2, [2, 1, 1, 1]),
     ],
 )
-def test_sequence_validity(initial, constant, vector, batch_size=10):
+def test_sequence_validity(initial, constant, vector):
     """Test that generated sequences are valid."""
-    generator = Sequence.linear(initial, constant, vector)
-    x, y = generator.generate_batch(batch_size=batch_size)
+    sequence = Sequence.linear(initial, constant, vector)
+    x, y = next(sequence)
 
-    assert x.shape == (batch_size, Config.model.x_len)
+    assert x.shape == (Config.train.batch_size, Config.model.x_len)
     assert (x >= -Config.gen.max_int).all() and (x < Config.gen.max_int).all()
     assert (y >= -Config.gen.max_int).all() and (y < Config.gen.max_int).all()
 
 
-def test_batch_generation(batch_size=50):
-    """Test that batch generation works correctly."""
-    generator = Sequence.linear(5, 5, [2, 1])
+def test_sequence_iteration():
+    """Test that sequence iteration works correctly."""
+    sequence = Sequence.linear(10, 10, [3, 2, 1])
 
-    # Generate multiple batches
-    x1, _ = generator.generate_batch(batch_size=batch_size)
-    x2, _ = generator.generate_batch(batch_size=batch_size)
+    # Get multiple batches via iteration
+    x1, _ = next(sequence)
+    x1 = x1.clone()
+    x2, _ = next(sequence)
 
-    assert x1.shape == (batch_size, Config.model.x_len)
-    assert x2.shape == (batch_size, Config.model.x_len)
+    assert x1.shape == (Config.train.batch_size, Config.model.x_len)
+    assert x2.shape == (Config.train.batch_size, Config.model.x_len)
 
-    # Check that sequences are different between batches
+    # Check that sequences are different between iterations
     assert not torch.allclose(x1, x2)

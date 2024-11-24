@@ -7,8 +7,7 @@ from functools import wraps
 from pathlib import Path
 from typing import Any
 
-from .config import Config
-from .constants import DEBUG, LOGDATEFMT, LOGFMT
+from .config import C, Config
 
 
 def setup_logger(
@@ -38,7 +37,7 @@ def setup_logger(
     # Only add handlers if none exist
     if not logger.handlers:
         # Create formatter
-        formatter = logging.Formatter(fmt=LOGFMT, datefmt=LOGDATEFMT)
+        formatter = logging.Formatter(fmt=C.LOGFMT, datefmt=C.LOGDATEFMT)
 
         # Console handler (only if propagate is False)
         if not propagate:
@@ -60,7 +59,7 @@ def setup_logger(
     return logger
 
 
-def log_io(logger: logging.Logger, level: int = DEBUG) -> Callable:
+def log_io(logger: logging.Logger, level: int = C.DEBUG) -> Callable:
     """Log function calls with args and return values.
 
     Args:

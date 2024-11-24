@@ -2,8 +2,7 @@
 
 import torch
 
-from .config import Config
-from .constants import ADJECTIVES, NOUNS
+from .config import C, Config
 
 
 class ModelID:
@@ -21,8 +20,8 @@ class ModelID:
         used: List currently used model identifiers
     """
 
-    ADJECTIVES = ADJECTIVES
-    NOUNS = NOUNS
+    ADJECTIVES = C.ADJECTIVES
+    NOUNS = C.NOUNS
 
     @classmethod
     def gen_id(cls) -> str:

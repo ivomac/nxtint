@@ -1,11 +1,10 @@
 """Configuration classes for nxtint."""
 
+import logging
 from contextlib import contextmanager
 from pathlib import Path
 
 import torch
-
-from .constants import DEBUG
 
 if torch.cuda.is_available():
     torch.set_default_device("cuda")
@@ -167,6 +166,147 @@ class SaveConfig(metaclass=BaseConfig):
     log_file: str = "training.log"
 
 
+class C:
+    """Global constants.
+
+    Attributes:
+        NAN: NaN tensor
+        INF: Infinity tensor
+        INFO: Logging level for informational messages
+        DEBUG: Logging level for debug messages
+        LOGFMT: Log message format
+        LOGDATEFMT: Log date format
+        ADJECTIVES: List of adjectives for naming
+        NOUNS: List of nouns for naming
+    """
+
+    NAN = torch.tensor(float("nan"), dtype=torch.float32)
+
+    INF = torch.tensor(float("inf"))
+
+    INFO = logging.INFO
+    DEBUG = logging.DEBUG
+
+    LOGFMT = "%(asctime)s - %(levelname)s - %(module)s: %(message)s"
+    LOGDATEFMT = "%y-%m-%d %H:%M:%S"
+
+    ADJECTIVES = [
+        "swift",
+        "bright",
+        "clever",
+        "deep",
+        "eager",
+        "fierce",
+        "gentle",
+        "happy",
+        "keen",
+        "lively",
+        "mighty",
+        "noble",
+        "proud",
+        "quiet",
+        "rapid",
+        "sharp",
+        "smart",
+        "strong",
+        "wise",
+        "bold",
+        "brave",
+        "calm",
+        "deft",
+        "fair",
+        "grand",
+        "quick",
+        "wild",
+        "young",
+        "agile",
+        "alert",
+        "ancient",
+        "astute",
+        "broad",
+        "clear",
+        "cosmic",
+        "divine",
+        "exact",
+        "fleet",
+        "fluid",
+        "fresh",
+        "golden",
+        "great",
+        "high",
+        "just",
+        "kind",
+        "light",
+        "lucid",
+        "prime",
+        "pure",
+        "rare",
+        "royal",
+        "sage",
+        "sure",
+        "true",
+        "vast",
+    ]
+
+    NOUNS = [
+        "falcon",
+        "tiger",
+        "wolf",
+        "eagle",
+        "bear",
+        "dragon",
+        "phoenix",
+        "lion",
+        "hawk",
+        "owl",
+        "panther",
+        "dolphin",
+        "raven",
+        "lynx",
+        "fox",
+        "cobra",
+        "jaguar",
+        "whale",
+        "shark",
+        "seal",
+        "griffin",
+        "unicorn",
+        "sphinx",
+        "hydra",
+        "kraken",
+        "serpent",
+        "leopard",
+        "falcon",
+        "stag",
+        "horse",
+        "turtle",
+        "salmon",
+        "crane",
+        "heron",
+        "swan",
+        "falcon",
+        "kestrel",
+        "osprey",
+        "condor",
+        "albatross",
+        "gazelle",
+        "cheetah",
+        "puma",
+        "orca",
+        "manta",
+        "octopus",
+        "dragon",
+        "phoenix",
+        "sphinx",
+        "hydra",
+        "pegasus",
+        "chimera",
+        "manticore",
+        "basilisk",
+        "wyvern",
+    ]
+
+
 class LogConfig(metaclass=BaseConfig):
     """Logging configuration.
 
@@ -179,7 +319,7 @@ class LogConfig(metaclass=BaseConfig):
 
     dir: Path = Path("./cache")
     file: str = "nxtint.log"
-    level: int = DEBUG
+    level: int = C.DEBUG
     train_steps: int = 100
 
 
@@ -205,6 +345,7 @@ class Config(metaclass=BaseConfig):
     dtype = TypeConfig
     save = SaveConfig
     log = LogConfig
+    C = C
 
     @classmethod
     @contextmanager

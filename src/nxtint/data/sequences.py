@@ -32,8 +32,8 @@ class Sequence:
         cls,
         initial: int,
         constant: int,
-        vector: torch.Tensor | list[int],
-        modlims: torch.Tensor | tuple[int, int] | None = None,
+        vector: list[int],
+        modlims: tuple[int, int] | None = None,
         shift: int | None = None,
     ) -> "Sequence":
         """Create a linear recurrence sequence generator.
@@ -51,6 +51,7 @@ class Sequence:
         Returns:
             Callable: Function to generate a buffer of sequences
         """
+        t_vector = torch.tensor(vector, dtype=Config.dtype.int)
 
         @log_io(logger)
         def linmodshift() -> torch.Tensor:
@@ -63,7 +64,7 @@ class Sequence:
             # Fill first column with initial values
             buffer[:, 0] = gen_scalar(initial)
             const = gen_scalar(constant)
-            vec = gen_vector(vector)
+            vec = gen_vector(t_vector)
             mod = gen_positive(*modlims) if modlims is not None else None
 
             # Generate each sequence using the recurrence relation
@@ -87,9 +88,9 @@ class Sequence:
     @log_io(logger)
     def coupled(
         cls,
-        initial: torch.Tensor,
-        constant: torch.Tensor,
-        matrix: torch.Tensor,
+        initial: list[int],
+        constant: list[int],
+        matrix: list[list[int]],
         shift: int | None = None,
     ) -> "Sequence":
         """Create a coupled recurrence sequence generator.
@@ -107,6 +108,9 @@ class Sequence:
         Returns:
             Callable: Function to generate a buffer of sequences
         """
+        t_initial = torch.tensor(initial, dtype=Config.dtype.int)
+        t_constant = torch.tensor(constant, dtype=Config.dtype.int)
+        t_matrix = torch.tensor(matrix, dtype=Config.dtype.int)
 
         @log_io(logger)
         def coupshift() -> torch.Tensor:
@@ -116,9 +120,9 @@ class Sequence:
                 (Config.gen.buffer_size, Config.model.x_len + 1, 2), dtype=Config.dtype.int
             )
 
-            buffer[:, 0, :] = gen_vector(initial)
-            const = gen_vector(constant)
-            mat = gen_matrix(matrix)
+            buffer[:, 0, :] = gen_vector(t_initial)
+            const = gen_vector(t_constant)
+            mat = gen_matrix(t_matrix)
 
             # Generate each sequence using the recurrence relation
             for i in range(1, Config.model.x_len + 1):
@@ -137,11 +141,56 @@ class Sequence:
         # Initialize empty buffer
         self.buffer = torch.empty(0)
 
+        self.x = torch.empty(
+            (Config.train.batch_size, Config.model.x_len),
+            dtype=Config.dtype.int,
+        )
+        self.y = torch.empty(
+            (Config.train.batch_size,),
+            dtype=torch.int,
+        )
+
         # Initialize counters
         self.current_idx = 0
         self.total_sequences = 0
         self.valid_sequences = 0
         return
+
+    @log_io(logger)
+    def __iter__(self):
+        """Create iterator for batches of sequences."""
+        return self
+
+    @log_io(logger)
+    def __next__(self) -> tuple[torch.Tensor, torch.Tensor]:
+        """Generate next batch of valid sequences.
+
+        Returns:
+            tuple[torch.Tensor, torch.Tensor]: Batch of sequences and targets
+        """
+        # Preallocate output tensor
+        valid_count = 0
+
+        while valid_count < Config.train.batch_size:
+            # Generate new buffer if needed
+            if self.current_idx >= self.valid_indices.shape[0]:
+                self.generate_buffer()
+
+            # Get remaining sequences needed
+            remaining = Config.train.batch_size - valid_count
+
+            # Get available from current buffer
+            indices = self.valid_indices[self.current_idx : self.current_idx + remaining]
+            available = len(indices)
+
+            self.x[valid_count : valid_count + available] = self.buffer[indices, :-1]
+            self.y[valid_count : valid_count + available] = self.buffer[indices, -1]
+
+            # Update position
+            self.current_idx += available
+            valid_count += available
+
+        return self.x, self.y
 
     def generate_buffer(self):
         """Generate a new buffer of sequences."""
@@ -150,8 +199,8 @@ class Sequence:
             del self.valid_indices
         self.current_idx = 0
 
-        self.total_sequences += Config.gen.buffer_size
-        self.valid_sequences += torch.sum(self.valid_indices).item()
+        self.total_sequences += len(self.buffer)
+        self.valid_sequences += len(self.valid_indices)
 
         valid_percent = 100 * self.valid_sequences / self.total_sequences
         logger.debug(
@@ -176,48 +225,6 @@ class Sequence:
             .squeeze()
         )
 
-    @log_io(logger)
-    def generate_batch(self, batch_size: int) -> tuple[torch.Tensor, torch.Tensor]:
-        """Generate a batch of valid sequences.
-
-        Args:
-            batch_size: Number of sequences to generate
-
-        Returns:
-            torch.Tensor: Batch of valid sequences of shape (batch_size, x_len)
-        """
-        # Preallocate output tensor
-        x = torch.empty(
-            (batch_size, Config.model.x_len),
-            dtype=Config.dtype.int,
-        )
-        y = torch.empty(
-            (batch_size,),
-            dtype=torch.int,
-        )
-        valid_count = 0
-
-        while valid_count < batch_size:
-            # Generate new buffer if needed
-            if self.current_idx >= len(self.valid_indices):
-                self.generate_buffer()
-
-            # Get remaining sequences needed
-            remaining = batch_size - valid_count
-
-            # Get available from current buffer
-            indices = self.valid_indices[self.current_idx : self.current_idx + remaining]
-            available = len(indices)
-
-            x[valid_count : valid_count + available] = self.buffer[indices, :-1]
-            y[valid_count : valid_count + available] = self.buffer[indices, -1]
-
-            # Update position
-            self.current_idx += available
-            valid_count += available
-
-        return x, y
-
 
 def gen_normal(std):
     """Generate a random integer from a normal distribution."""
@@ -234,17 +241,15 @@ def gen_positive(min, max):
     return torch.randint(min, max + 1, (Config.gen.buffer_size,), dtype=Config.dtype.int)
 
 
-def gen_vector(val_vector):
+def gen_vector(val_vector: torch.Tensor):
     """Generate a random integer parameter vector."""
-    val_vector = torch.tensor(val_vector, dtype=Config.dtype.int)
     vector = torch.zeros((Config.gen.buffer_size, *val_vector.shape), dtype=Config.dtype.int)
     for i, val in enumerate(val_vector):
         vector[:, i] = gen_scalar(val.item())
     return vector
 
 
-def gen_matrix(val_matrix):
+def gen_matrix(val_matrix: torch.Tensor):
     """Generate a random integer parameter matrix."""
-    val_matrix = torch.tensor(val_matrix, dtype=Config.dtype.int)
     vector = gen_vector(val_matrix.view((-1,)))
     return vector.view((Config.gen.buffer_size, *val_matrix.shape))
